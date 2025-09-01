@@ -16,7 +16,11 @@
   "settings": {
     "typescript.preferences.includePackageJsonAutoImports": "on",
     "typescript.suggest.autoImports": true,
-    "eslint.workingDirectories": ["frontend", "backend"]
+    "eslint.workingDirectories": [
+      "frontend",
+      "backend"
+    ],
+    "liveServer.settings.multiRootWorkspaceName": "Root"
   },
   "extensions": {
     "recommendations": [

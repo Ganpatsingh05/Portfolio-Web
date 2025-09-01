@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,32 +7,40 @@ export async function POST(request: NextRequest) {
     const { event_type, event_data } = body
 
     // Get client info
-    const ip = request.headers.get('x-forwarded-for') || 
-               request.headers.get('x-real-ip') || 
-               'unknown'
+    const rawIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || ''
+    // x-forwarded-for can be a list: "client, proxy1, proxy2" -> take first
+    const firstIp = rawIp.split(',')[0]?.trim() || ''
+    const isValidIp = (val: string) => {
+      // Simple IPv4/IPv6 check
+      const ipv4 = /^(25[0-5]|2[0-4]\d|[01]?\d?\d)(\.(25[0-5]|2[0-4]\d|[01]?\d?\d)){3}$/
+      const ipv6 = /^[0-9a-fA-F:]+$/
+      return ipv4.test(val) || (val.includes(':') && ipv6.test(val))
+    }
+    const ip = isValidIp(firstIp) ? firstIp : null
     const userAgent = request.headers.get('user-agent') || 'unknown'
     const referrer = request.headers.get('referer') || 'direct'
 
     // Insert analytics event
-    const { data, error } = await supabase
+    const { error } = await supabaseAdmin
       .from('analytics')
       .insert({
         event_type,
         event_data,
-        ip_address: ip,
+  ip_address: ip,
         user_agent: userAgent,
         referrer
       })
-      .select()
-      .single()
 
     if (error) throw error
 
-    return NextResponse.json({ data }, { status: 201 })
+    return NextResponse.json({ success: true }, { status: 201 })
   } catch (error) {
     console.error('Error logging analytics:', error)
+    const isDev = process.env.NODE_ENV !== 'production'
     return NextResponse.json(
-      { error: 'Failed to log analytics' },
+      isDev
+        ? { error: 'Failed to log analytics', details: (error as any)?.message, code: (error as any)?.code }
+        : { error: 'Failed to log analytics' },
       { status: 500 }
     )
   }
@@ -41,17 +49,17 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     // Get analytics summary
-    const { data: totalViews, error: viewsError } = await supabase
+    const { data: totalViews, error: viewsError } = await supabaseAdmin
       .from('analytics')
       .select('*')
       .eq('event_type', 'page_view')
 
-    const { data: projectClicks, error: clicksError } = await supabase
+    const { data: projectClicks, error: clicksError } = await supabaseAdmin
       .from('analytics')
       .select('*')
       .eq('event_type', 'project_click')
 
-    const { data: resumeDownloads, error: downloadsError } = await supabase
+    const { data: resumeDownloads, error: downloadsError } = await supabaseAdmin
       .from('analytics')
       .select('*')
       .eq('event_type', 'resume_download')

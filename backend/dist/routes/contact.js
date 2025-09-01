@@ -20,6 +20,7 @@ const transporter = nodemailer_1.default.createTransport({
 router.post('/', [
     (0, express_validator_1.body)('name').notEmpty().withMessage('Name is required'),
     (0, express_validator_1.body)('email').isEmail().withMessage('Valid email is required'),
+    (0, express_validator_1.body)('subject').notEmpty().withMessage('Subject is required'),
     (0, express_validator_1.body)('message').notEmpty().withMessage('Message is required'),
 ], async (req, res) => {
     try {
@@ -27,12 +28,13 @@ router.post('/', [
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
-        const { name, email, message, phone } = req.body;
+        const { name, email, subject, message, phone } = req.body;
         const { data: contactMessage, error: dbError } = await supabase_1.default
             .from('contact_messages')
             .insert([{
                 name,
                 email,
+                subject,
                 message,
                 phone,
                 status: 'unread'
@@ -47,11 +49,12 @@ router.post('/', [
             await transporter.sendMail({
                 from: process.env.EMAIL_FROM,
                 to: process.env.EMAIL_TO,
-                subject: `New Contact Form Message from ${name}`,
+                subject: `New Contact Form Message from ${name}: ${subject}`,
                 html: `
           <h2>New Contact Form Submission</h2>
           <p><strong>Name:</strong> ${name}</p>
           <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Subject:</strong> ${subject}</p>
           <p><strong>Phone:</strong> ${phone || 'Not provided'}</p>
           <p><strong>Message:</strong></p>
           <p>${message}</p>

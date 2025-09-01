@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
     // Insert contact message
-    const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
       .from('contact_messages')
       .insert({
         name,
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     if (error) throw error
 
     // Log analytics event
-    await supabase
+  await supabaseAdmin
       .from('analytics')
       .insert({
         event_type: 'contact_form',
@@ -55,8 +55,9 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
   } catch (error) {
     console.error('Error sending contact message:', error)
+    const message = (error as any)?.message || 'Failed to send message'
     return NextResponse.json(
-      { error: 'Failed to send message' },
+      { error: message },
       { status: 500 }
     )
   }
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     // This would be protected in a real app
-    const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
       .from('contact_messages')
       .select('*')
       .order('created_at', { ascending: false })
@@ -95,7 +96,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update message as read
-    const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
       .from('contact_messages')
       .update({ is_read: true })
       .eq('id', id)

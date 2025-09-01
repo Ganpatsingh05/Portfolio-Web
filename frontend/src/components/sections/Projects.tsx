@@ -70,6 +70,17 @@ export default function Projects() {
   
   const categories = ['All', 'Web Dev', 'Data Science', 'AI', 'ML']
 
+  // Choose a Lottie animation based on category; fall back to a rotating set for variety
+  const getProjectAnimation = (category: string, index: number) => {
+    const key = (category || '').toLowerCase()
+    if (key.includes('web')) return 'web'
+    if (key.includes('data')) return 'data'
+    if (key === 'ai' || key === 'ml' || key.includes('ai')) return 'ai'
+    // rotate through a few for unknown categories
+    const pool = ['rocket', 'mobile', 'coding', 'web'] as const
+    return pool[index % pool.length]
+  }
+
   // Fetch projects from API
   useEffect(() => {
     const fetchProjects = async () => {
@@ -223,7 +234,7 @@ export default function Projects() {
               <div className="h-48 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-600 dark:from-orange-600 dark:via-amber-600 dark:to-yellow-700 relative overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <LottieAnimation 
-                    fallbackAnimation="coding"
+                    fallbackAnimation={getProjectAnimation(project.category, index)}
                     className="w-32 h-32 opacity-90"
                   />
                 </div>
@@ -399,7 +410,13 @@ function ProjectDetailModal({ project, onClose }: { project: Project; onClose: (
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
               <LottieAnimation 
-                fallbackAnimation="coding"
+                fallbackAnimation={(project.category ? ((cat => {
+                  const k = cat.toLowerCase()
+                  if (k.includes('web')) return 'web'
+                  if (k.includes('data')) return 'data'
+                  if (k === 'ai' || k === 'ml' || k.includes('ai')) return 'ai'
+                  return 'rocket'
+                })(project.category)) : 'rocket')}
                 className="w-16 h-16"
               />
               <div>

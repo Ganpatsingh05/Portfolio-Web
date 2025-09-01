@@ -9,6 +9,8 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const multer_1 = __importDefault(require("multer"));
 const cloudinary_1 = require("cloudinary");
 const supabase_1 = __importDefault(require("../lib/supabase"));
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const router = (0, express_1.Router)();
 cloudinary_1.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -607,23 +609,56 @@ router.post('/upload/resume', authenticateAdmin, resumeUpload.single('resume'), 
         if (!req.file) {
             return res.status(400).json({ error: 'No PDF file provided' });
         }
-        const result = await cloudinary_1.v2.uploader.upload_stream({
-            resource_type: 'auto',
-            folder: 'portfolio/resumes',
-            public_id: `resume_${Date.now()}`,
-            format: 'pdf'
-        }, (error, result) => {
-            if (error) {
-                console.error('Cloudinary upload error:', error);
-                return res.status(500).json({ error: 'Failed to upload resume' });
-            }
-            res.json({
-                url: result?.secure_url,
-                publicId: result?.public_id,
-                originalName: req.file?.originalname
+        const hasCloudinary = Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+        if (hasCloudinary) {
+            const stream = await cloudinary_1.v2.uploader.upload_stream({
+                resource_type: 'auto',
+                folder: 'portfolio/resumes',
+                public_id: `resume_${Date.now()}`,
+                format: 'pdf'
+            }, (error, result) => {
+                if (error) {
+                    console.error('Cloudinary upload error:', error);
+                    const authErrors = ['Unknown API key', 'Invalid Signature', 'Invalid credentials'];
+                    const msg = (error?.message || '').toString();
+                    const shouldFallback = authErrors.some(e => msg.includes(e)) || error?.http_code === 401;
+                    if (shouldFallback) {
+                        try {
+                            const uploadsDir = path_1.default.join(__dirname, '../../uploads/resumes');
+                            if (!fs_1.default.existsSync(uploadsDir))
+                                fs_1.default.mkdirSync(uploadsDir, { recursive: true });
+                            const fileName = `resume_${Date.now()}.pdf`;
+                            const filePath = path_1.default.join(uploadsDir, fileName);
+                            fs_1.default.writeFileSync(filePath, req.file.buffer);
+                            const publicUrl = `http://localhost:${process.env.PORT || 5000}/uploads/resumes/${fileName}`;
+                            return res.json({ url: publicUrl, originalName: req.file?.originalname });
+                        }
+                        catch (fallbackErr) {
+                            console.error('Local fallback upload failed:', fallbackErr);
+                            return res.status(500).json({ error: 'Failed to upload resume' });
+                        }
+                    }
+                    return res.status(500).json({ error: 'Failed to upload resume' });
+                }
+                res.json({
+                    url: result?.secure_url,
+                    publicId: result?.public_id,
+                    originalName: req.file?.originalname
+                });
             });
-        });
-        result.end(req.file.buffer);
+            stream.end(req.file.buffer);
+        }
+        else {
+            const uploadsDir = path_1.default.join(__dirname, '../../uploads/resumes');
+            if (!fs_1.default.existsSync(uploadsDir)) {
+                fs_1.default.mkdirSync(uploadsDir, { recursive: true });
+            }
+            const fileName = `resume_${Date.now()}.pdf`;
+            const filePath = path_1.default.join(uploadsDir, fileName);
+            fs_1.default.writeFileSync(filePath, req.file.buffer);
+            const publicUrl = `http://localhost:${process.env.PORT || 5000}/uploads/resumes/${fileName}`;
+            res.json({ url: publicUrl, originalName: req.file?.originalname });
+        }
     }
     catch (error) {
         console.error('Error uploading resume:', error);

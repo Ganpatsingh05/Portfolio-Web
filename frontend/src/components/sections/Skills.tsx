@@ -34,7 +34,8 @@ interface Skill {
   id?: string
   name: string
   level: number
-  category: 'frontend' | 'backend' | 'tools' | 'ai-ml'
+  // Allow custom categories coming from admin (e.g., "excel")
+  category: string
   icon_name?: string
   sort_order?: number
   is_featured?: boolean
@@ -61,25 +62,56 @@ const iconMap: { [key: string]: React.ReactNode } = {
   FaCode: <FaCode className="text-gray-600" />
 }
 
+// Base colors (used by helpers below)
 const categoryColors = {
   frontend: 'from-orange-400 to-amber-500',
   backend: 'from-emerald-500 to-green-600',
   tools: 'from-orange-500 to-red-500',
-  'ai-ml': 'from-orange-600 to-purple-600'
-}
+  'ai-ml': 'from-orange-600 to-purple-600',
+  other: 'from-cyan-500 to-teal-600',
+  custom: 'from-fuchsia-500 to-pink-600',
+  default: 'from-violet-500 to-indigo-600'
+} as const
 
 const categoryIcons = {
   frontend: <FaCode className="text-orange-500" />,
   backend: <FaDatabase className="text-emerald-500" />,
   tools: <FaTools className="text-orange-500" />,
-  'ai-ml': <FaBrain className="text-purple-500" />
+  'ai-ml': <FaBrain className="text-purple-500" />,
+  other: <FaTools className="text-teal-500" />,
+  custom: <FaFlask className="text-fuchsia-500" />
 }
 
 const categoryNames = {
   frontend: 'Frontend',
   backend: 'Backend',
   tools: 'Tools & DevOps',
-  'ai-ml': 'AI & ML'
+  'ai-ml': 'AI & ML',
+  other: 'Other',
+  custom: 'Custom'
+}
+
+// Normalize a category string to a known key for colors/icons
+const normalizeCategoryKey = (cat?: string) => {
+  const key = (cat || '').toLowerCase()
+  if (key in categoryColors) return key as keyof typeof categoryColors
+  if (key in categoryIcons) return key as keyof typeof categoryIcons
+  if (key in categoryNames) return key as keyof typeof categoryNames
+  // Treat unknowns as custom for styling; we still display the raw label
+  return 'custom' as const
+}
+
+const getCategoryGradient = (cat?: string) => {
+  const key = normalizeCategoryKey(cat)
+  return categoryColors[key] || categoryColors.default
+}
+
+const getCategoryLabel = (cat?: string) => {
+  const key = (cat || '').toLowerCase()
+  if (key in categoryNames) return categoryNames[key as keyof typeof categoryNames]
+  if (!cat) return 'Custom'
+  // Show the exact custom category text (e.g., "Excel")
+  return cat
 }
 
 export default function Skills() {
@@ -99,7 +131,16 @@ export default function Skills() {
           throw new Error('Failed to fetch skills')
         }
         const data = await response.json()
-        setSkills(data)
+        // Sort by category (asc), then level desc, then name asc
+        const sorted = (data as Skill[]).slice().sort((a, b) => {
+          const ca = (a.category || '').toLowerCase()
+          const cb = (b.category || '').toLowerCase()
+          if (ca < cb) return -1
+          if (ca > cb) return 1
+          if (a.level !== b.level) return b.level - a.level
+          return (a.name || '').localeCompare(b.name || '')
+        })
+        setSkills(sorted)
       } catch (err) {
         console.error('Error fetching skills:', err)
         setError('Failed to load skills')
@@ -128,7 +169,7 @@ export default function Skills() {
     fetchSkills()
   }, [])
   
-  const categories = ['all', 'frontend', 'backend', 'tools', 'ai-ml']
+  const categories = ['all', 'frontend', 'backend', 'tools', 'ai-ml', 'other', 'custom']
   
   const filteredSkills = activeCategory === 'all' 
     ? skills 
@@ -283,7 +324,7 @@ export default function Skills() {
                   whileInView={{ width: `${skill.level}%` }}
                   transition={{ duration: 1.5, delay: index * 0.1, ease: "easeOut" }}
                   viewport={{ once: true }}
-                  className={`h-full bg-gradient-to-r ${categoryColors[skill.category]} rounded-full relative overflow-hidden`}
+                  className={`h-full bg-gradient-to-r ${getCategoryGradient(skill.category)} rounded-full relative overflow-hidden`}
                 >
                   <motion.div
                     animate={{ x: ['0%', '100%', '0%'] }}
@@ -294,8 +335,8 @@ export default function Skills() {
               </div>
               
               <div className="flex justify-between items-center">
-                <span className={`text-xs px-3 py-1 rounded-full bg-gradient-to-r ${categoryColors[skill.category]} text-white font-medium`}>
-                  {categoryNames[skill.category]}
+                <span className={`text-xs px-3 py-1 rounded-full bg-gradient-to-r ${getCategoryGradient(skill.category)} text-white font-medium`}>
+                  {getCategoryLabel(skill.category)}
                 </span>
                 <motion.div
                   animate={{ opacity: hoveredSkill === skill.name ? 1 : 0 }}

@@ -109,11 +109,11 @@ export default function Footer() {
             {/* Contact Info */}
             <div className="space-y-3">
               <button 
-                onClick={() => openEmail('ganpatsingh.dev@gmail.com')}
+                onClick={() => openEmail('ganpatsingh.tech@gmail.com')}
                 className="flex items-center gap-3 text-gray-300 hover:text-orange-300 transition-colors cursor-pointer"
               >
                 <FaEnvelope className="text-orange-500" />
-                <span>ganpatsingh.dev@gmail.com</span>
+                <span>ganpatsingh.tech@gmail.com</span>
               </button>
               <div className="flex items-center gap-3 text-gray-300 hover:text-orange-300 transition-colors">
                 <FaMapMarkerAlt className="text-orange-500" />

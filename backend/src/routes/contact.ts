@@ -20,6 +20,7 @@ const transporter = nodemailer.createTransport({
 router.post('/', [
   body('name').notEmpty().withMessage('Name is required'),
   body('email').isEmail().withMessage('Valid email is required'),
+  body('subject').notEmpty().withMessage('Subject is required'),
   body('message').notEmpty().withMessage('Message is required'),
 ], async (req: Request, res: Response) => {
   try {
@@ -28,7 +29,7 @@ router.post('/', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, message, phone } = req.body;
+  const { name, email, subject, message, phone } = req.body;
 
     // Save to database
     const { data: contactMessage, error: dbError } = await supabase
@@ -36,6 +37,7 @@ router.post('/', [
       .insert([{
         name,
         email,
+        subject,
         message,
         phone,
         status: 'unread'
@@ -53,11 +55,12 @@ router.post('/', [
       await transporter.sendMail({
         from: process.env.EMAIL_FROM,
         to: process.env.EMAIL_TO,
-        subject: `New Contact Form Message from ${name}`,
+        subject: `New Contact Form Message from ${name}: ${subject}`,
         html: `
           <h2>New Contact Form Submission</h2>
           <p><strong>Name:</strong> ${name}</p>
           <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Subject:</strong> ${subject}</p>
           <p><strong>Phone:</strong> ${phone || 'Not provided'}</p>
           <p><strong>Message:</strong></p>
           <p>${message}</p>

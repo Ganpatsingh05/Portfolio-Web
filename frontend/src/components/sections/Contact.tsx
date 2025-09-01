@@ -241,14 +241,14 @@ export default function Contact() {
                 <motion.div 
                   whileHover={{ x: 5 }}
                   className="flex items-center space-x-4 group cursor-pointer"
-                  onClick={() => openEmail('ganpatsingh.dev@gmail.com')}
+                  onClick={() => openEmail('ganpatsingh.tech@gmail.com')}
                 >
                   <div className="w-14 h-14 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center group-hover:shadow-lg group-hover:shadow-orange-500/25 transition-all duration-300">
                     <FaEnvelope className="w-6 h-6 text-white" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-orange-300 group-hover:text-orange-200 transition-colors">Email</h4>
-                    <p className="text-gray-300 group-hover:text-white transition-colors">ganpatsingh.dev@gmail.com</p>
+                    <p className="text-gray-300 group-hover:text-white transition-colors">ganpatsingh.tech@gmail.com</p>
                   </div>
                 </motion.div>
 

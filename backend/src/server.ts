@@ -45,6 +45,15 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Serve admin dashboard at a discreet path (/gdash) without exposing a link
+app.get('/gdash', (req: Request, res: Response) => {
+  res.sendFile(path.resolve(__dirname, '../../admin-dashboard.html'));
+});
+// Serve its CSS (linked relatively as /admin.css or we can reference /gdash.css; keep simple)
+app.get('/gdash.css', (req: Request, res: Response) => {
+  res.sendFile(path.resolve(__dirname, '../../admin.css'));
+});
+
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
   res.json({ 

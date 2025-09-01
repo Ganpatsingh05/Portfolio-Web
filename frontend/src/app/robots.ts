@@ -5,8 +5,15 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: '/private/',
+      disallow: [
+        '/private/',
+        '/gdash',
+        '/admin.html',
+        '/uploads/',
+        '/api/',
+      ],
     },
-    sitemap: 'https://yourwebsite.com/sitemap.xml',
+    sitemap: 'https://ganpatsingh.tech/sitemap.xml',
+    host: 'https://ganpatsingh.tech',
   }
 }

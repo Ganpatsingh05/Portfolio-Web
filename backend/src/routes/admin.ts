@@ -4,8 +4,21 @@ import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import supabase from '../lib/supabase';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
+
+// Helper to verify Cloudinary config isn't using placeholder values
+const isValidCloudinaryConfig = () => {
+  const cn = (process.env.CLOUDINARY_CLOUD_NAME || '').toLowerCase();
+  const key = (process.env.CLOUDINARY_API_KEY || '').toLowerCase();
+  const sec = (process.env.CLOUDINARY_API_SECRET || '').toLowerCase();
+  const placeholders = ['your_api_key', 'your_api_secret', 'your_cloud_name'];
+  const hasValues = Boolean(cn && key && sec);
+  const hasPlaceholders = placeholders.some(p => cn.includes(p) || key.includes(p) || sec.includes(p));
+  return hasValues && !hasPlaceholders;
+};
 
 // Configure Cloudinary
 cloudinary.config({
@@ -138,57 +151,56 @@ router.put('/personal-info', authenticateAdmin, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // Get the first record ID
+    // Extract only valid personal info fields and include only provided (defined) keys
+    const allowedKeys = [
+      'name',
+      'title',
+      'email',
+      'phone',
+      'location',
+      'bio',
+      'linkedin_url',
+      'github_url',
+      'twitter_url',
+      'website_url',
+      'resume_url',
+      'profile_image_url'
+    ] as const;
+
+    const updateData: Record<string, any> = {};
+    for (const key of allowedKeys) {
+      if (Object.prototype.hasOwnProperty.call(req.body, key) && req.body[key] !== undefined) {
+        updateData[key] = req.body[key];
+      }
+    }
+    updateData.updated_at = new Date().toISOString();
+
+    // Get (or create) the single personal_info row
     const { data: existingData } = await supabase
       .from('personal_info')
       .select('id')
       .limit(1)
       .single();
 
-    if (!existingData) {
-      return res.status(404).json({ error: 'Personal info not found' });
+    let personalInfo;
+    if (existingData) {
+      const { data, error } = await supabase
+        .from('personal_info')
+        .update(updateData)
+        .eq('id', existingData.id)
+        .select()
+        .single();
+      if (error) throw error;
+      personalInfo = data;
+    } else {
+      const { data, error } = await supabase
+        .from('personal_info')
+        .insert([updateData])
+        .select()
+        .single();
+      if (error) throw error;
+      personalInfo = data;
     }
-
-    // Extract only valid personal info fields
-    const {
-      name,
-      title,
-      email,
-      phone,
-      location,
-      bio,
-      linkedin_url,
-      github_url,
-      twitter_url,
-      website_url,
-      resume_url,
-      profile_image_url
-    } = req.body;
-
-    const updateData = {
-      name,
-      title,
-      email,
-      phone,
-      location,
-      bio,
-      linkedin_url,
-      github_url,
-      twitter_url,
-      website_url,
-      resume_url,
-      profile_image_url,
-      updated_at: new Date().toISOString()
-    };
-
-    const { data: personalInfo, error } = await supabase
-      .from('personal_info')
-      .update(updateData)
-      .eq('id', existingData.id)
-      .select()
-      .single();
-
-    if (error) throw error;
 
     res.json(personalInfo);
   } catch (error) {
@@ -780,29 +792,67 @@ router.post('/upload/resume', authenticateAdmin, resumeUpload.single('resume'), 
       return res.status(400).json({ error: 'No PDF file provided' });
     }
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload_stream(
-      {
-        resource_type: 'auto',
-        folder: 'portfolio/resumes',
-        public_id: `resume_${Date.now()}`,
-        format: 'pdf'
-      },
-      (error: any, result: any) => {
-        if (error) {
-          console.error('Cloudinary upload error:', error);
-          return res.status(500).json({ error: 'Failed to upload resume' });
-        }
-        
-        res.json({
-          url: result?.secure_url,
-          publicId: result?.public_id,
-          originalName: req.file?.originalname
-        });
-      }
-    );
+  const hasCloudinary = isValidCloudinaryConfig();
 
-    result.end(req.file.buffer);
+    if (hasCloudinary) {
+      // Upload to Cloudinary
+      const stream = await cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'auto',
+          folder: 'portfolio/resumes',
+          public_id: `resume_${Date.now()}`,
+          format: 'pdf'
+        },
+        (error: any, result: any) => {
+          if (error) {
+            // Fall back to local storage on auth or key errors (avoid noisy logs)
+            const authErrors = ['Unknown API key', 'Invalid Signature', 'Invalid credentials'];
+            const msg = (error?.message || '').toString();
+            const shouldFallback = authErrors.some(e => msg.includes(e)) || error?.http_code === 401;
+            if (shouldFallback) {
+              try {
+                const uploadsDir = path.join(__dirname, '../../uploads/resumes');
+                if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+                const fileName = `resume_${Date.now()}.pdf`;
+                const filePath = path.join(uploadsDir, fileName);
+                fs.writeFileSync(filePath, req.file.buffer);
+                const publicUrl = `http://localhost:${process.env.PORT || 5000}/uploads/resumes/${fileName}`;
+                // Log a single concise warning when falling back
+                if (process.env.NODE_ENV !== 'production') {
+                  console.warn('Cloudinary auth failed; using local resume upload fallback.');
+                }
+                return res.json({ url: publicUrl, originalName: req.file?.originalname });
+              } catch (fallbackErr) {
+                console.error('Local fallback upload failed:', fallbackErr);
+                return res.status(500).json({ error: 'Failed to upload resume' });
+              }
+            }
+            // Non-auth errors: log once
+            console.error('Cloudinary upload error:', error);
+            return res.status(500).json({ error: 'Failed to upload resume' });
+          }
+          
+          res.json({
+            url: result?.secure_url,
+            publicId: result?.public_id,
+            originalName: req.file?.originalname
+          });
+        }
+      );
+
+      stream.end(req.file.buffer);
+    } else {
+      // Fallback: save to local filesystem and serve via /uploads
+      const uploadsDir = path.join(__dirname, '../../uploads/resumes');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      const fileName = `resume_${Date.now()}.pdf`;
+      const filePath = path.join(uploadsDir, fileName);
+      fs.writeFileSync(filePath, req.file.buffer);
+      const publicUrl = `http://localhost:${process.env.PORT || 5000}/uploads/resumes/${fileName}`;
+      res.json({ url: publicUrl, originalName: req.file?.originalname });
+    }
 
   } catch (error) {
     console.error('Error uploading resume:', error);
