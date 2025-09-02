@@ -525,7 +525,7 @@ router.put('/messages/:id/read', authenticateAdmin, async (req: Request, res: Re
 // ==================== SKILLS MANAGEMENT ====================
 
 // Get all skills
-router.get('/skills', async (req: Request, res: Response) => {
+router.get('/skills', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { data: skills, error } = await supabase
       .from('skills')
@@ -541,7 +541,7 @@ router.get('/skills', async (req: Request, res: Response) => {
 });
 
 // Create skill
-router.post('/skills', [
+router.post('/skills', authenticateAdmin, [
   body('name').notEmpty().withMessage('Skill name is required'),
   body('level').isInt({ min: 0, max: 100 }).withMessage('Level must be between 0 and 100'),
   body('category').notEmpty().withMessage('Category is required'),
@@ -567,7 +567,7 @@ router.post('/skills', [
 });
 
 // Update skill
-router.put('/skills/:id', [
+router.put('/skills/:id', authenticateAdmin, [
   body('name').optional().notEmpty(),
   body('level').optional().isInt({ min: 0, max: 100 }),
   body('category').optional().notEmpty(),
@@ -604,7 +604,7 @@ router.put('/skills/:id', [
 });
 
 // Delete skill
-router.delete('/skills/:id', async (req: Request, res: Response) => {
+router.delete('/skills/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -624,7 +624,7 @@ router.delete('/skills/:id', async (req: Request, res: Response) => {
 // ==================== EXPERIENCES MANAGEMENT ====================
 
 // Get all experiences
-router.get('/experiences', async (req: Request, res: Response) => {
+router.get('/experiences', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { data: experiences, error } = await supabase
       .from('experiences')
@@ -649,7 +649,7 @@ router.get('/experiences', async (req: Request, res: Response) => {
 });
 
 // Create experience
-router.post('/experiences', [
+router.post('/experiences', authenticateAdmin, [
   body('title').notEmpty().withMessage('Title is required'),
   body('company').notEmpty().withMessage('Company is required'),
   body('period').notEmpty().withMessage('Period is required'),
@@ -686,7 +686,7 @@ router.post('/experiences', [
 });
 
 // Update experience
-router.put('/experiences/:id', [
+router.put('/experiences/:id', authenticateAdmin, [
   body('title').optional().notEmpty(),
   body('company').optional().notEmpty(),
   body('period').optional().notEmpty(),
@@ -732,7 +732,7 @@ router.put('/experiences/:id', [
 });
 
 // Delete experience
-router.delete('/experiences/:id', async (req: Request, res: Response) => {
+router.delete('/experiences/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -752,7 +752,7 @@ router.delete('/experiences/:id', async (req: Request, res: Response) => {
 // ==================== PERSONAL INFO MANAGEMENT ====================
 
 // Get personal info
-router.get('/personal-info', async (req: Request, res: Response) => {
+router.get('/personal-info', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { data: personalInfo, error } = await supabase
       .from('personal_info')
@@ -769,7 +769,7 @@ router.get('/personal-info', async (req: Request, res: Response) => {
 });
 
 // Update personal info
-router.put('/personal-info', [
+router.put('/personal-info', authenticateAdmin, [
   body('name').optional().notEmpty(),
   body('title').optional().notEmpty(),
   body('email').optional().isEmail(),
