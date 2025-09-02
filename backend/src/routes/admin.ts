@@ -92,7 +92,14 @@ router.post('/login', [
     const adminPassword = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV !== 'production' ? 'GanpatPortfolio2024!' : '');
 
     if (process.env.NODE_ENV === 'production' && (!adminUsername || !adminPassword)) {
-      return res.status(500).json({ error: 'Admin credentials are not configured' });
+      // Provide safe diagnostics to help configuration in production
+      const details = {
+        hasUsername: Boolean(adminUsername),
+        hasPassword: Boolean(adminPassword),
+        nodeEnv: process.env.NODE_ENV
+      };
+      console.error('Admin login config error:', details);
+      return res.status(500).json({ error: 'Admin credentials are not configured', details });
     }
 
     if (username !== adminUsername || password !== adminPassword) {
