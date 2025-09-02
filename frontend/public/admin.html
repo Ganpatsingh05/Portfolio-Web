@@ -84,7 +84,7 @@
                                     </svg>
                                 </div>
                             </div>
-                            <p class="text-3xl font-bold text-blue-600" x-text="dashboardStats.projects"></p>
+                            <p class="text-3xl font-bold text-blue-600" x-text="dashboardStats.projects || 0"></p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow group hover:shadow-md transition transform hover:-translate-y-0.5 border-l-4 border-green-500">
                             <div class="flex items-center justify-between mb-2">
@@ -95,7 +95,7 @@
                                     </svg>
                                 </div>
                             </div>
-                            <p class="text-3xl font-bold text-green-600" x-text="dashboardStats.skills"></p>
+                            <p class="text-3xl font-bold text-green-600" x-text="dashboardStats.skills || 0"></p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow group hover:shadow-md transition transform hover:-translate-y-0.5 border-l-4 border-amber-500">
                             <div class="flex items-center justify-between mb-2">
@@ -106,7 +106,7 @@
                                     </svg>
                                 </div>
                             </div>
-                            <p class="text-3xl font-bold text-yellow-600" x-text="dashboardStats.messages"></p>
+                            <p class="text-3xl font-bold text-yellow-600" x-text="dashboardStats.messages || 0"></p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow group hover:shadow-md transition transform hover:-translate-y-0.5 border-l-4 border-purple-500">
                             <div class="flex items-center justify-between mb-2">
@@ -118,7 +118,7 @@
                                     </svg>
                                 </div>
                             </div>
-                            <p class="text-3xl font-bold text-purple-600" x-text="dashboardStats.pageViews"></p>
+                            <p class="text-3xl font-bold text-purple-600" x-text="dashboardStats.pageViews || 0"></p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow group hover:shadow-md transition transform hover:-translate-y-0.5 border-l-4 border-slate-500">
                             <div class="flex items-center justify-between mb-2">
@@ -155,11 +155,11 @@
                                 <div class="border-b pb-4 mb-4 last:border-b-0">
                                     <div class="flex justify-between items-start">
                                         <div>
-                                            <h4 class="font-semibold" x-text="message.name"></h4>
-                                            <p class="text-gray-600" x-text="message.email"></p>
-                                            <p class="text-sm text-gray-500 mt-2" x-text="message.message"></p>
+                                            <h4 class="font-semibold" x-text="message.name || 'Anonymous'"></h4>
+                                            <p class="text-gray-600" x-text="message.email || 'No email'"></p>
+                                            <p class="text-sm text-gray-500 mt-2" x-text="message.message || 'No message content'"></p>
                                         </div>
-                                        <span class="text-xs text-gray-400" x-text="formatDate(message.created_at)"></span>
+                                        <span class="text-xs text-gray-400" x-text="formatDate(message.created_at || new Date())"></span>
                                     </div>
                                 </div>
                             </template>
@@ -290,12 +290,12 @@
                                         <tr class="hover:bg-gray-50 transition-colors">
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div>
-                                                    <div class="text-sm font-medium text-gray-900" x-text="project.title"></div>
-                                                    <div class="text-sm text-gray-500" x-text="project.description.substring(0, 100) + '...'"></div>
+                                                    <div class="text-sm font-medium text-gray-900" x-text="project.title || 'Untitled'"></div>
+                                                    <div class="text-sm text-gray-500" x-text="(project.description || 'No description').length > 100 ? (project.description || '').substring(0, 100) + '...' : (project.description || 'No description')"></div>
                                                 </div>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="project.category"></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="Array.isArray(project.technologies) ? project.technologies.join(', ') : project.technologies"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="project.category || 'Uncategorized'"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="Array.isArray(project.technologies) ? project.technologies.join(', ') : (project.technologies || 'No technologies')"></td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <button @click="editProject(project)" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
                                                 <button @click="deleteProject(project.id)" class="text-red-600 hover:text-red-900">Delete</button>
@@ -328,14 +328,14 @@
                                 <tbody class="divide-y divide-gray-200">
                                     <template x-for="skill in skills" :key="skill.id">
                                         <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="skill.name"></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="skill.category"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="skill.name || 'Unnamed Skill'"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="skill.category || 'Uncategorized'"></td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 <div class="flex items-center">
                                                     <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                                                        <div class="h-2 rounded-full" :class="skillBarClass(skill)" :style="`width: ${skill.level}%`"></div>
+                                                        <div class="h-2 rounded-full" :class="skillBarClass(skill)" :style="`width: ${skill.level || 0}%`"></div>
                                                     </div>
-                                                    <span x-text="skill.level + '%'"></span>
+                                                    <span x-text="(skill.level || 0) + '%'"></span>
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -372,16 +372,16 @@
                                         <template x-for="experience in experiences" :key="experience.id">
                                             <tr class="hover:bg-gray-50 transition-colors">
                                                 <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="text-sm font-medium text-gray-900" x-text="experience.title"></div>
+                                                    <div class="text-sm font-medium text-gray-900" x-text="experience.title || 'Untitled Experience'"></div>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="text-sm text-gray-900" x-text="experience.company"></div>
+                                                    <div class="text-sm text-gray-900" x-text="experience.company || 'Unknown Company'"></div>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="text-sm text-gray-900" x-text="experience.period"></div>
+                                                    <div class="text-sm text-gray-900" x-text="experience.period || 'Unknown Period'"></div>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span :class="experience.type === 'experience' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" x-text="experience.type === 'experience' ? 'Work' : 'Education'"></span>
+                                                    <span :class="(experience.type === 'experience' || experience.type === 'work') ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" x-text="(experience.type === 'experience' || experience.type === 'work') ? 'Work' : 'Education'"></span>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <button @click="editExperience(experience)" class="text-blue-600 hover:text-blue-900 mr-2">Edit</button>
@@ -447,12 +447,12 @@
                                     <div class="flex justify-between items-start">
                                         <div class="flex-1">
                                             <div class="flex items-center mb-2">
-                                                <h3 class="text-lg font-semibold" x-text="message.name"></h3>
+                                                <h3 class="text-lg font-semibold" x-text="message.name || 'Anonymous'"></h3>
                                                 <span x-show="(message.status ? message.status !== 'read' : !message.is_read)" class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">NEW</span>
                                             </div>
-                                            <p class="text-gray-600 mb-2" x-text="message.email"></p>
-                                            <p class="text-gray-800 mb-4" x-text="message.message"></p>
-                                            <p class="text-sm text-gray-500" x-text="formatDate(message.created_at)"></p>
+                                            <p class="text-gray-600 mb-2" x-text="message.email || 'No email'"></p>
+                                            <p class="text-gray-800 mb-4" x-text="message.message || 'No message content'"></p>
+                                            <p class="text-sm text-gray-500" x-text="formatDate(message.created_at || new Date())"></p>
                                         </div>
                                         <button x-show="(message.status ? message.status !== 'read' : !message.is_read)" @click="markAsRead(message.id)" class="ml-4 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Mark as Read</button>
                                     </div>
