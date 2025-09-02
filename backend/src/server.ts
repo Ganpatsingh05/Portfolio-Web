@@ -69,6 +69,16 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
+// Health check via API prefix (useful for frontends proxying /api)
+app.get('/api/health', (req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    message: 'Backend is running 🚀',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
+  });
+});
+
 // API routes
 app.use('/api/projects', projectsRouter);
 app.use('/api/contact', contactRouter);

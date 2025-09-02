@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
     <title>Portfolio Admin Dashboard</title>
     <!-- Local Tailwind build (served by backend at /gdash.css) -->
     <link rel="stylesheet" href="/gdash.css">
@@ -882,6 +883,26 @@
     </div>
 
     <script>
+        // Rewrite any localhost API calls to relative /api for production safety
+        (function() {
+            const LHOST = 'http://localhost:5000';
+            const origFetch = window.fetch.bind(window);
+            window.fetch = function(input, init) {
+                try {
+                    if (typeof input === 'string' && input.startsWith(LHOST + '/api')) {
+                        return origFetch(input.replace(LHOST, ''), init);
+                    }
+                    if (input && typeof input === 'object' && 'url' in input && input.url && input.url.startsWith(LHOST + '/api')) {
+                        const req = new Request(input, init);
+                        return origFetch(new Request(req.url.replace(LHOST, ''), req), init);
+                    }
+                } catch (_) {
+                    // fall through to original fetch
+                }
+                return origFetch(input, init);
+            };
+        })();
+
         function adminApp() {
             return {
                 // Authentication
