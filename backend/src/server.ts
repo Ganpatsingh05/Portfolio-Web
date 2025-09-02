@@ -34,12 +34,31 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // CORS configuration
+// Supports comma-separated list in CORS_ORIGIN and wildcard entries like *.vercel.app
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow everything in non-production for easier local/dev testing
     if (process.env.NODE_ENV !== 'production') return callback(null, true);
-    const allowed = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
-    if (!origin) return callback(null, true); // Allow non-browser clients
-    if (allowed.includes(origin)) return callback(null, true);
+
+    const raw = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+
+    // No Origin header (e.g., curl, Postman) -> allow
+    if (!origin) return callback(null, true);
+
+    const isAllowed = (() => {
+      for (const entry of raw) {
+        // Exact match
+        if (entry === origin) return true;
+        // Wildcard support: "*.example.com"
+        if (entry.startsWith('*.')) {
+          const base = entry.slice(1); // ".example.com"
+          if (origin.endsWith(base)) return true;
+        }
+      }
+      return false;
+    })();
+
+    if (isAllowed) return callback(null, true);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true
