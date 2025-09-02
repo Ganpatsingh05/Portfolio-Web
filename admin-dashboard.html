@@ -950,7 +950,7 @@
                     this.token = localStorage.getItem('adminToken');
                     if (this.token) {
                         // Try a lightweight authenticated request to confirm token validity
-                        fetch('http://localhost:5000/api/admin/dashboard', {
+                        fetch('/api/admin/dashboard', {
                             headers: { 'Authorization': `Bearer ${this.token}` }
                         }).then(resp => {
                             if (resp.status === 401) {
@@ -974,7 +974,7 @@
                     this.error = '';
 
                     try {
-                        const response = await fetch('http://localhost:5000/api/admin/login', {
+                        const response = await fetch('/api/admin/login', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(this.credentials)
@@ -1018,7 +1018,7 @@
         async fetchDashboardStats() {
                     try {
                         // Fetch aggregated stats from backend admin dashboard
-                        const dashResp = await fetch('http://localhost:5000/api/admin/dashboard', {
+                        const dashResp = await fetch('/api/admin/dashboard', {
                             headers: { 'Authorization': `Bearer ${this.token}` }
                         });
 
@@ -1046,7 +1046,7 @@
 
                 async fetchPersonalInfo() {
                     try {
-                        const response = await fetch('http://localhost:5000/api/admin/personal-info', {
+                        const response = await fetch('/api/admin/personal-info', {
                             headers: { 'Authorization': `Bearer ${this.token}` }
                         });
                         if (response.status === 401) {
@@ -1064,7 +1064,7 @@
                 async updatePersonalInfo() {
                     this.loading = true;
                     try {
-                        const response = await fetch('http://localhost:5000/api/admin/personal-info', {
+                        const response = await fetch('/api/admin/personal-info', {
                             method: 'PUT',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1123,7 +1123,7 @@
                             }
                         }, 200);
 
-            const response = await fetch('http://localhost:5000/api/admin/upload/resume', {
+            const response = await fetch('/api/admin/upload/resume', {
                             method: 'POST',
                             headers: {
                 'Authorization': `Bearer ${this.token}`
@@ -1143,7 +1143,7 @@
                             this.personalInfo.resume_url = result.url;
                             // Immediately persist resume_url so it survives refresh
                             try {
-                                const saveResp = await fetch('http://localhost:5000/api/admin/personal-info', {
+                                const saveResp = await fetch('/api/admin/personal-info', {
                                     method: 'PUT',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -1190,7 +1190,7 @@
 
                 async fetchProjects() {
                     try {
-                        const response = await fetch('http://localhost:5000/api/projects');
+                        const response = await fetch('/api/projects');
                         if (response.status === 401) {
                             this.logout();
                             return;
@@ -1228,8 +1228,8 @@
                 async saveProject() {
                     try {
                         const url = this.editingProject 
-                            ? `http://localhost:5000/api/admin/projects/${this.editingProject.id}`
-                            : 'http://localhost:5000/api/admin/projects';
+                            ? `/api/admin/projects/${this.editingProject.id}`
+                            : '/api/admin/projects';
                         
                         const method = this.editingProject ? 'PUT' : 'POST';
 
@@ -1259,7 +1259,7 @@
                 async deleteProject(id) {
                     if (confirm('Are you sure you want to delete this project?')) {
                         try {
-                            const response = await fetch(`http://localhost:5000/api/admin/projects/${id}`, {
+                            const response = await fetch(`/api/admin/projects/${id}`, {
                                 method: 'DELETE',
                                 headers: { 'Authorization': `Bearer ${this.token}` }
                             });
@@ -1280,7 +1280,7 @@
 
                 async fetchSkills() {
                     try {
-                        const response = await fetch('http://localhost:5000/api/personal-info/skills');
+                        const response = await fetch('/api/personal-info/skills');
                         if (response.status === 401) {
                             this.logout();
                             return;
@@ -1345,8 +1345,8 @@
                                 async saveSkill() {
                     try {
                         const url = this.editingSkill 
-                            ? `http://localhost:5000/api/admin/skills/${this.editingSkill.id}`
-                            : 'http://localhost:5000/api/admin/skills';
+                            ? `/api/admin/skills/${this.editingSkill.id}`
+                            : '/api/admin/skills';
                         
                         const method = this.editingSkill ? 'PUT' : 'POST';
 
@@ -1385,7 +1385,7 @@
                 async deleteSkill(id) {
                     if (confirm('Are you sure you want to delete this skill?')) {
                         try {
-                            const response = await fetch(`http://localhost:5000/api/admin/skills/${id}`, {
+                            const response = await fetch(`/api/admin/skills/${id}`, {
                                 method: 'DELETE',
                                 headers: { 'Authorization': `Bearer ${this.token}` }
                             });
@@ -1407,7 +1407,7 @@
                 // Experience Management
                 async fetchExperiences() {
                     try {
-                        const response = await fetch('http://localhost:5000/api/admin/experiences', {
+                        const response = await fetch('/api/admin/experiences', {
                             headers: { 'Authorization': `Bearer ${this.token}` }
                         });
 
@@ -1443,8 +1443,8 @@
                     this.loading = true;
                     try {
                         const url = this.editingExperience 
-                            ? `http://localhost:5000/api/admin/experiences/${this.editingExperience.id}`
-                            : 'http://localhost:5000/api/admin/experiences';
+                            ? `/api/admin/experiences/${this.editingExperience.id}`
+                            : '/api/admin/experiences';
                         
                         const method = this.editingExperience ? 'PUT' : 'POST';
 
@@ -1476,7 +1476,7 @@
                 async deleteExperience(id) {
                     if (confirm('Are you sure you want to delete this experience?')) {
                         try {
-                            const response = await fetch(`http://localhost:5000/api/admin/experiences/${id}`, {
+                            const response = await fetch(`/api/admin/experiences/${id}`, {
                                 method: 'DELETE',
                                 headers: { 'Authorization': `Bearer ${this.token}` }
                             });
@@ -1497,7 +1497,7 @@
 
         async fetchMessages() {
                     try {
-            const response = await fetch('http://localhost:5000/api/contact');
+            const response = await fetch('/api/contact');
 
                         if (response.ok) {
                             this.messages = await response.json();
@@ -1509,7 +1509,7 @@
 
                 async markAsRead(id) {
                     try {
-                        const response = await fetch(`http://localhost:5000/api/contact/${id}/status`, {
+                        const response = await fetch(`/api/contact/${id}/status`, {
                             method: 'PATCH',
                             headers: {
                                 'Content-Type': 'application/json'
