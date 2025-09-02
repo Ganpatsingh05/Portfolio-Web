@@ -9,6 +9,22 @@ import path from 'path';
 
 const router = Router();
 
+// Env: JWT secret handling
+const JWT_SECRET = process.env.JWT_SECRET;
+if (process.env.NODE_ENV === 'production' && !JWT_SECRET) {
+  throw new Error('JWT_SECRET is required in production');
+}
+
+// Helper: compute public base URL
+const getBaseUrl = (req: Request): string => {
+  const envUrl = process.env.PUBLIC_BASE_URL;
+  if (envUrl) return envUrl.replace(/\/$/, '');
+  const proto = (req.get('x-forwarded-proto') || req.protocol || 'http').toString();
+  const host = (req.get('x-forwarded-host') || req.get('host')) as string | undefined;
+  if (host) return `${proto}://${host}`;
+  return `http://localhost:${process.env.PORT || 5000}`;
+};
+
 // Helper to verify Cloudinary config isn't using placeholder values
 const isValidCloudinaryConfig = () => {
   const cn = (process.env.CLOUDINARY_CLOUD_NAME || '').toLowerCase();
@@ -51,7 +67,8 @@ const authenticateAdmin = (req: Request, res: Response, next: any) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ganpat_portfolio_super_secret_key_2024');
+  const secret = JWT_SECRET || 'dev_fallback_insecure_jwt_secret';
+  const decoded = jwt.verify(token, secret);
     (req as any).adminUser = decoded; // Store admin info separately, not in req.body
     next();
   } catch (error) {
@@ -71,8 +88,12 @@ router.post('/login', [
     }
 
     const { username, password } = req.body;
-    const adminUsername = process.env.ADMIN_USERNAME || 'admin';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'GanpatPortfolio2024!';
+    const adminUsername = process.env.ADMIN_USERNAME || (process.env.NODE_ENV !== 'production' ? 'admin' : '');
+    const adminPassword = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV !== 'production' ? 'GanpatPortfolio2024!' : '');
+
+    if (process.env.NODE_ENV === 'production' && (!adminUsername || !adminPassword)) {
+      return res.status(500).json({ error: 'Admin credentials are not configured' });
+    }
 
     if (username !== adminUsername || password !== adminPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -80,7 +101,7 @@ router.post('/login', [
 
     const token = jwt.sign(
       { username, role: 'admin' },
-      process.env.JWT_SECRET || 'ganpat_portfolio_super_secret_key_2024',
+      JWT_SECRET || 'dev_fallback_insecure_jwt_secret',
       { expiresIn: '24h' }
     );
 
@@ -809,14 +830,14 @@ router.post('/upload/resume', authenticateAdmin, resumeUpload.single('resume'), 
             const authErrors = ['Unknown API key', 'Invalid Signature', 'Invalid credentials'];
             const msg = (error?.message || '').toString();
             const shouldFallback = authErrors.some(e => msg.includes(e)) || error?.http_code === 401;
-            if (shouldFallback) {
+      if (shouldFallback) {
               try {
                 const uploadsDir = path.join(__dirname, '../../uploads/resumes');
                 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
                 const fileName = `resume_${Date.now()}.pdf`;
                 const filePath = path.join(uploadsDir, fileName);
                 fs.writeFileSync(filePath, req.file.buffer);
-                const publicUrl = `http://localhost:${process.env.PORT || 5000}/uploads/resumes/${fileName}`;
+        const publicUrl = `${getBaseUrl(req as Request)}/uploads/resumes/${fileName}`;
                 // Log a single concise warning when falling back
                 if (process.env.NODE_ENV !== 'production') {
                   console.warn('Cloudinary auth failed; using local resume upload fallback.');
@@ -850,7 +871,7 @@ router.post('/upload/resume', authenticateAdmin, resumeUpload.single('resume'), 
       const fileName = `resume_${Date.now()}.pdf`;
       const filePath = path.join(uploadsDir, fileName);
       fs.writeFileSync(filePath, req.file.buffer);
-      const publicUrl = `http://localhost:${process.env.PORT || 5000}/uploads/resumes/${fileName}`;
+  const publicUrl = `${getBaseUrl(req as Request)}/uploads/resumes/${fileName}`;
       res.json({ url: publicUrl, originalName: req.file?.originalname });
     }
 

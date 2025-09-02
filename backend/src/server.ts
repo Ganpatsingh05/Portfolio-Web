@@ -17,6 +17,8 @@ import uploadsRouter from './routes/uploads';
 dotenv.config();
 
 const app = express();
+// Trust proxy for correct IP/proto behind reverse proxies (Render/NGINX/Cloudflare)
+app.set('trust proxy', true);
 const PORT = process.env.PORT || 5000;
 
 // Security middleware
@@ -32,9 +34,13 @@ app.use(limiter);
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.CORS_ORIGIN || 'http://localhost:3000'
-    : true, // Allow all origins in development
+  origin: (origin, callback) => {
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    const allowed = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!origin) return callback(null, true); // Allow non-browser clients
+    if (allowed.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
@@ -108,7 +114,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🔗 API URL: http://localhost:${PORT}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`🔗 API URL: http://localhost:${PORT}`);
+  }
 });
 
 export default app;

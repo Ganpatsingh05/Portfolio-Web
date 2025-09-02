@@ -42,8 +42,8 @@ cp .env.example .env.local
 3. Configure environment variables in `.env.local`:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_URL=https://yuvejygfodghfqaydndy.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1dmVqeWdmb2RnaGZxYXlkbmR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MDE1ODUsImV4cCI6MjA3MjI3NzU4NX0.ItBdd9fXr2lKIdaBUbqAeSkOMYL_m-lwgcFnndaFUq4
 ```
 
 ### Development
@@ -121,8 +121,8 @@ Create a `.env.local` file with the following variables:
 NEXT_PUBLIC_API_URL=http://localhost:5000
 
 # Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_URL=https://yuvejygfodghfqaydndy.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1dmVqeWdmb2RnaGZxYXlkbmR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MDE1ODUsImV4cCI6MjA3MjI3NzU4NX0.ItBdd9fXr2lKIdaBUbqAeSkOMYL_m-lwgcFnndaFUq4
 
 # Analytics (Optional)
 NEXT_PUBLIC_GA_ID=your_google_analytics_id
