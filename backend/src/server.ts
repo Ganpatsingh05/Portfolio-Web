@@ -12,6 +12,7 @@ import analyticsRouter from './routes/analytics';
 import personalInfoRouter from './routes/personal-info';
 import adminRouter from './routes/admin';
 import uploadsRouter from './routes/uploads';
+import publicRouter from './routes/public';
 
 // Load environment variables
 dotenv.config();
@@ -116,6 +117,8 @@ app.use('/api/analytics', analyticsRouter);
 app.use('/api/personal-info', personalInfoRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/uploads', uploadsRouter);
+// Public, unauthenticated routes expected by the frontend hooks
+app.use('/api', publicRouter);
 
 // Default route
 app.get('/', (req: Request, res: Response) => {
