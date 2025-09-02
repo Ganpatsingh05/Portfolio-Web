@@ -5,7 +5,7 @@ export function ThemeScript() {
         __html: `
           (function() {
             try {
-              var theme = localStorage.getItem('portfolio-theme') || 'system';
+              var theme = localStorage.getItem('portfolio-theme') || 'light';
               var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
               var resolvedTheme = theme === 'system' ? systemTheme : theme;
               

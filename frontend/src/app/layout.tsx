@@ -79,7 +79,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-gray-900`}
       >
         <ThemeProvider
-          defaultTheme="system"
+          defaultTheme="light"
           storageKey="portfolio-theme"
         >
           {children}
