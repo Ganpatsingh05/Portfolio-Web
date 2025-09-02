@@ -1196,7 +1196,8 @@
                             return;
                         }
                         if (response.ok) {
-                            this.projects = await response.json();
+                            const payload = await response.json();
+                            this.projects = Array.isArray(payload) ? payload : (payload?.data || []);
                         }
                     } catch (error) {
                         console.error('Error fetching projects:', error);
@@ -1285,7 +1286,8 @@
                             return;
                         }
                         if (response.ok) {
-                            const list = await response.json();
+                            const payload = await response.json();
+                            const list = Array.isArray(payload) ? payload : (payload?.data || []);
                             this.skills = this.sortSkills(list);
                         }
                     } catch (error) {
