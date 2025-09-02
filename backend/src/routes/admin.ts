@@ -238,6 +238,22 @@ router.put('/personal-info', authenticateAdmin, [
 });
 
 // Manage projects
+// List projects (admin)
+router.get('/projects', authenticateAdmin, async (req: Request, res: Response) => {
+  try {
+    const { data: projects, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json(projects || []);
+  } catch (error) {
+    console.error('List projects (admin) error:', error);
+    res.status(500).json({ error: 'Failed to fetch projects' });
+  }
+});
+
 router.post('/projects', authenticateAdmin, [
   body('title').notEmpty().withMessage('Title is required'),
   body('description').notEmpty().withMessage('Description is required'),

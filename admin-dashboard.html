@@ -1190,7 +1190,10 @@
 
                 async fetchProjects() {
                     try {
-                        const response = await fetch('/api/projects');
+                        // Prefer admin endpoint (auth) for consistency
+                        const response = await fetch('/api/admin/projects', {
+                            headers: { 'Authorization': `Bearer ${this.token}` }
+                        });
                         if (response.status === 401) {
                             this.logout();
                             return;
@@ -1198,6 +1201,13 @@
                         if (response.ok) {
                             const payload = await response.json();
                             this.projects = Array.isArray(payload) ? payload : (payload?.data || []);
+                        } else {
+                            // Fallback to public endpoint if needed
+                            const pub = await fetch('/api/projects');
+                            if (pub.ok) {
+                                const payload = await pub.json();
+                                this.projects = Array.isArray(payload) ? payload : (payload?.data || []);
+                            }
                         }
                     } catch (error) {
                         console.error('Error fetching projects:', error);
@@ -1233,13 +1243,21 @@
                         
                         const method = this.editingProject ? 'PUT' : 'POST';
 
+                        // Convert technologies string to array
+                        const payload = {
+                            ...this.projectForm,
+                            technologies: typeof this.projectForm.technologies === 'string' 
+                                ? this.projectForm.technologies.split(',').map(t => t.trim()).filter(t => t)
+                                : (this.projectForm.technologies || [])
+                        };
+
                         const response = await fetch(url, {
                             method,
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': `Bearer ${this.token}`
                             },
-                            body: JSON.stringify(this.projectForm)
+                            body: JSON.stringify(payload)
                         });
 
                         if (response.status === 401) {
@@ -1250,9 +1268,13 @@
                             this.showProjectModal = false;
                             this.fetchProjects();
                             alert('Project saved successfully!');
+                        } else {
+                            const error = await response.json();
+                            throw new Error(error.error || 'Failed to save project');
                         }
                     } catch (error) {
-                        alert('Error saving project');
+                        console.error('Error saving project:', error);
+                        alert(`Error saving project: ${error.message}`);
                     }
                 },
 
@@ -1280,7 +1302,10 @@
 
                 async fetchSkills() {
                     try {
-                        const response = await fetch('/api/personal-info/skills');
+                        // Use authenticated admin endpoint for skills
+                        const response = await fetch('/api/admin/skills', {
+                            headers: { 'Authorization': `Bearer ${this.token}` }
+                        });
                         if (response.status === 401) {
                             this.logout();
                             return;
@@ -1289,6 +1314,14 @@
                             const payload = await response.json();
                             const list = Array.isArray(payload) ? payload : (payload?.data || []);
                             this.skills = this.sortSkills(list);
+                        } else {
+                            // Fallback to public endpoint
+                            const fallback = await fetch('/api/skills');
+                            if (fallback.ok) {
+                                const payload = await fallback.json();
+                                const list = Array.isArray(payload) ? payload : (payload?.data || []);
+                                this.skills = this.sortSkills(list);
+                            }
                         }
                     } catch (error) {
                         console.error('Error fetching skills:', error);
@@ -1350,9 +1383,10 @@
                         
                         const method = this.editingSkill ? 'PUT' : 'POST';
 
-                                                // Normalize category for custom option
+                                                // Normalize category and types for backend validators
                                                 const payload = {
                                                         ...this.skillForm,
+                                                        level: Number(this.skillForm.level),
                                                         category: this.skillForm.category === 'custom' 
                                                             ? (this.skillForm.customCategory || 'custom')
                                                             : this.skillForm.category
@@ -1376,9 +1410,13 @@
                             await this.fetchSkills();
                             this.skills = this.sortSkills(this.skills);
                             alert('Skill saved successfully!');
+                        } else {
+                            const error = await response.json();
+                            throw new Error(error.error || 'Failed to save skill');
                         }
                     } catch (error) {
-                        alert('Error saving skill');
+                        console.error('Error saving skill:', error);
+                        alert(`Error saving skill: ${error.message}`);
                     }
                 },
 
