@@ -506,7 +506,7 @@
                     init() {
                         this.token = localStorage.getItem('adminToken');
                         if (this.token) {
-                            fetch('http://localhost:5000/api/admin/dashboard', { headers: { 'Authorization': `Bearer ${this.token}` } })
+                            fetch('/api/admin/dashboard', { headers: { 'Authorization': `Bearer ${this.token}` } })
                                 .then(resp => {
                                     if (resp.status === 401) {
                                         localStorage.removeItem('adminToken');
@@ -524,7 +524,7 @@
                     async login() {
                         this.loading = true; this.error = '';
                         try {
-                            const response = await fetch('http://localhost:5000/api/admin/login', {
+                            const response = await fetch('/api/admin/login', {
                                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.credentials)
                             });
                             const data = await response.json();
@@ -541,7 +541,7 @@
 
                     async fetchDashboardStats() {
                         try {
-                            const dashResp = await fetch('http://localhost:5000/api/admin/dashboard', { headers: { 'Authorization': `Bearer ${this.token}` } });
+                            const dashResp = await fetch('/api/admin/dashboard', { headers: { 'Authorization': `Bearer ${this.token}` } });
                             if (dashResp.status === 401) { this.logout(); return; }
                             if (dashResp.ok) {
                                 const dash = await dashResp.json();
@@ -553,7 +553,7 @@
 
                     async fetchPersonalInfo() {
                         try {
-                            const response = await fetch('http://localhost:5000/api/admin/personal-info', { headers: { 'Authorization': `Bearer ${this.token}` } });
+                            const response = await fetch('/api/admin/personal-info', { headers: { 'Authorization': `Bearer ${this.token}` } });
                             if (response.status === 401) { this.logout(); return; }
                             if (response.ok) { this.personalInfo = await response.json(); }
                         } catch (e) { console.error('Error fetching personal info:', e); }
@@ -562,7 +562,7 @@
                     async updatePersonalInfo() {
                         this.loading = true;
                         try {
-                            const response = await fetch('http://localhost:5000/api/admin/personal-info', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` }, body: JSON.stringify(this.personalInfo) });
+                            const response = await fetch('/api/admin/personal-info', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` }, body: JSON.stringify(this.personalInfo) });
                             if (response.status === 401) { this.logout(); return; }
                             if (response.ok) { this.personalInfo = await response.json(); alert('Personal information updated successfully!'); }
                             else { const err = await response.json(); throw new Error(err.error || 'Failed to update personal information'); }
@@ -578,13 +578,13 @@
                         try {
                             const formData = new FormData(); formData.append('resume', file);
                             const progressInterval = setInterval(() => { if (this.uploadProgress < 90) { this.uploadProgress += Math.random() * 15; } }, 200);
-                            const response = await fetch('http://localhost:5000/api/admin/upload/resume', { method: 'POST', headers: { 'Authorization': `Bearer ${this.token}` }, body: formData });
+                            const response = await fetch('/api/admin/upload/resume', { method: 'POST', headers: { 'Authorization': `Bearer ${this.token}` }, body: formData });
                             clearInterval(progressInterval); this.uploadProgress = 100;
                             if (response.status === 401) { this.logout(); return; }
                             if (response.ok) {
                                 const result = await response.json(); this.personalInfo.resume_url = result.url;
                                 try {
-                                    const saveResp = await fetch('http://localhost:5000/api/admin/personal-info', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` }, body: JSON.stringify({ resume_url: this.personalInfo.resume_url }) });
+                                    const saveResp = await fetch('/api/admin/personal-info', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` }, body: JSON.stringify({ resume_url: this.personalInfo.resume_url }) });
                                     if (saveResp.status === 401) { this.logout(); return; }
                                     if (saveResp.ok) { this.personalInfo = await saveResp.json(); alert(`Resume uploaded and saved successfully!\nFile: ${result.originalName}`); }
                                     else { const err = await saveResp.json().catch(() => ({})); alert(`Resume uploaded, but failed to save profile: ${err.error || 'Unknown error'}`); }
@@ -596,13 +596,13 @@
                     },
 
                     async fetchProjects() {
-                        try { const response = await fetch('http://localhost:5000/api/projects'); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.projects = await response.json(); } } catch (e) { console.error('Error fetching projects:', e); }
+                        try { const response = await fetch('/api/projects'); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.projects = await response.json(); } } catch (e) { console.error('Error fetching projects:', e); }
                     },
                     resetProjectForm() { this.projectForm = { title: '', description: '', category: '', technologies: '', demo_url: '', github_url: '' }; },
                     editProject(project) { this.editingProject = project; this.projectForm = { ...project, demo_url: project.demo_url || project.live_url || '', technologies: Array.isArray(project.technologies) ? project.technologies.join(', ') : (project.technologies || '') }; this.showProjectModal = true; },
                     async saveProject() {
                         try {
-                            const url = this.editingProject ? `http://localhost:5000/api/admin/projects/${this.editingProject.id}` : 'http://localhost:5000/api/admin/projects';
+                            const url = this.editingProject ? `/api/admin/projects/${this.editingProject.id}` : '/api/admin/projects';
                             const method = this.editingProject ? 'PUT' : 'POST';
                             const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` }, body: JSON.stringify(this.projectForm) });
                             if (response.status === 401) { this.logout(); return; }
@@ -610,17 +610,17 @@
                         } catch { alert('Error saving project'); }
                     },
                     async deleteProject(id) {
-                        if (confirm('Are you sure you want to delete this project?')) { try { const response = await fetch(`http://localhost:5000/api/admin/projects/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${this.token}` } }); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.fetchProjects(); alert('Project deleted successfully!'); } } catch { alert('Error deleting project'); } }
+                        if (confirm('Are you sure you want to delete this project?')) { try { const response = await fetch(`/api/admin/projects/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${this.token}` } }); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.fetchProjects(); alert('Project deleted successfully!'); } } catch { alert('Error deleting project'); } }
                     },
 
-                    async fetchSkills() { try { const response = await fetch('http://localhost:5000/api/personal-info/skills'); if (response.status === 401) { this.logout(); return; } if (response.ok) { const list = await response.json(); this.skills = this.sortSkills(list); } } catch (e) { console.error('Error fetching skills:', e); } },
+                    async fetchSkills() { try { const response = await fetch('/api/personal-info/skills'); if (response.status === 401) { this.logout(); return; } if (response.ok) { const list = await response.json(); this.skills = this.sortSkills(list); } } catch (e) { console.error('Error fetching skills:', e); } },
                     sortSkills(list) { const catOrder = (c) => (c || '').toString().toLowerCase(); return (list || []).slice().sort((a, b) => { const ca = catOrder(a.category); const cb = catOrder(b.category); if (ca < cb) return -1; if (ca > cb) return 1; const la = Number(a.level) || 0; const lb = Number(b.level) || 0; if (la !== lb) return lb - la; const na = (a.name || '').toLowerCase(); const nb = (b.name || '').toLowerCase(); if (na < nb) return -1; if (na > nb) return 1; return 0; }); },
                     skillBarClass(skill) { const cat = (skill?.category || '').toString().toLowerCase(); if (cat === 'custom') return 'bg-fuchsia-600'; if (cat === 'other') return 'bg-teal-600'; if (cat === 'frontend') return 'bg-blue-600'; if (cat === 'backend') return 'bg-emerald-600'; if (cat === 'database') return 'bg-amber-600'; if (cat === 'tools') return 'bg-slate-600'; if (cat === 'language') return 'bg-violet-600'; return 'bg-indigo-600'; },
                     resetSkillForm() { this.skillForm = { name: '', category: '', customCategory: '', level: 50 }; },
                     editSkill(skill) { this.editingSkill = skill; this.skillForm = { ...skill, customCategory: '' }; this.showSkillModal = true; },
                     async saveSkill() {
                         try {
-                            const url = this.editingSkill ? `http://localhost:5000/api/admin/skills/${this.editingSkill.id}` : 'http://localhost:5000/api/admin/skills';
+                            const url = this.editingSkill ? `/api/admin/skills/${this.editingSkill.id}` : '/api/admin/skills';
                             const method = this.editingSkill ? 'PUT' : 'POST';
                             const payload = { ...this.skillForm, category: this.skillForm.category === 'custom' ? (this.skillForm.customCategory || 'custom') : this.skillForm.category };
                             const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` }, body: JSON.stringify(payload) });
@@ -628,16 +628,16 @@
                             if (response.ok) { this.showSkillModal = false; await this.fetchSkills(); this.skills = this.sortSkills(this.skills); alert('Skill saved successfully!'); }
                         } catch { alert('Error saving skill'); }
                     },
-                    async deleteSkill(id) { if (confirm('Are you sure you want to delete this skill?')) { try { const response = await fetch(`http://localhost:5000/api/admin/skills/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${this.token}` } }); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.fetchSkills(); alert('Skill deleted successfully!'); } } catch { alert('Error deleting skill'); } } },
+                    async deleteSkill(id) { if (confirm('Are you sure you want to delete this skill?')) { try { const response = await fetch(`/api/admin/skills/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${this.token}` } }); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.fetchSkills(); alert('Skill deleted successfully!'); } } catch { alert('Error deleting skill'); } } },
 
-                    async fetchExperiences() { try { const response = await fetch('http://localhost:5000/api/admin/experiences', { headers: { 'Authorization': `Bearer ${this.token}` } }); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.experiences = await response.json(); } } catch (e) { console.error('Error fetching experiences:', e); } },
+                    async fetchExperiences() { try { const response = await fetch('/api/admin/experiences', { headers: { 'Authorization': `Bearer ${this.token}` } }); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.experiences = await response.json(); } } catch (e) { console.error('Error fetching experiences:', e); } },
                     resetExperienceForm() { this.experienceForm = { title: '', company: '', period: '', type: '', description: '' }; },
                     editExperience(experience) { this.editingExperience = experience; this.experienceForm = { ...experience }; this.showExperienceForm = true; },
-                    async saveExperience() { this.loading = true; try { const url = this.editingExperience ? `http://localhost:5000/api/admin/experiences/${this.editingExperience.id}` : 'http://localhost:5000/api/admin/experiences'; const method = this.editingExperience ? 'PUT' : 'POST'; const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` }, body: JSON.stringify(this.experienceForm) }); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.showExperienceForm = false; this.fetchExperiences(); alert(`Experience ${this.editingExperience ? 'updated' : 'added'} successfully!`); } } catch { alert('Error saving experience'); } finally { this.loading = false; } },
-                    async deleteExperience(id) { if (confirm('Are you sure you want to delete this experience?')) { try { const response = await fetch(`http://localhost:5000/api/admin/experiences/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${this.token}` } }); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.fetchExperiences(); alert('Experience deleted successfully!'); } } catch { alert('Error deleting experience'); } } },
+                    async saveExperience() { this.loading = true; try { const url = this.editingExperience ? `/api/admin/experiences/${this.editingExperience.id}` : '/api/admin/experiences'; const method = this.editingExperience ? 'PUT' : 'POST'; const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` }, body: JSON.stringify(this.experienceForm) }); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.showExperienceForm = false; this.fetchExperiences(); alert(`Experience ${this.editingExperience ? 'updated' : 'added'} successfully!`); } } catch { alert('Error saving experience'); } finally { this.loading = false; } },
+                    async deleteExperience(id) { if (confirm('Are you sure you want to delete this experience?')) { try { const response = await fetch(`/api/admin/experiences/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${this.token}` } }); if (response.status === 401) { this.logout(); return; } if (response.ok) { this.fetchExperiences(); alert('Experience deleted successfully!'); } } catch { alert('Error deleting experience'); } } },
 
-                    async fetchMessages() { try { const response = await fetch('http://localhost:5000/api/contact'); if (response.ok) { this.messages = await response.json(); } } catch (e) { console.error('Error fetching messages:', e); } },
-                    async markAsRead(id) { try { const response = await fetch(`http://localhost:5000/api/contact/${id}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'read' }) }); if (response.ok) { this.fetchMessages(); this.fetchDashboardStats(); } } catch { alert('Error marking message as read'); } },
+                    async fetchMessages() { try { const response = await fetch('/api/contact'); if (response.ok) { this.messages = await response.json(); } } catch (e) { console.error('Error fetching messages:', e); } },
+                    async markAsRead(id) { try { const response = await fetch(`/api/contact/${id}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'read' }) }); if (response.ok) { this.fetchMessages(); this.fetchDashboardStats(); } } catch { alert('Error marking message as read'); } },
                     formatDate(dateString) { return new Date(dateString).toLocaleDateString() + ' ' + new Date(dateString).toLocaleTimeString(); }
                 }
             }
