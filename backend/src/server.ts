@@ -17,8 +17,9 @@ import uploadsRouter from './routes/uploads';
 dotenv.config();
 
 const app = express();
-// Trust proxy for correct IP/proto behind reverse proxies (Render/NGINX/Cloudflare)
-app.set('trust proxy', true);
+// Trust only the first proxy hop (Render/NGINX) for correct IP/proto without being permissive
+// Using numeric value avoids the express-rate-limit permissive trust proxy error
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
 // Security middleware
