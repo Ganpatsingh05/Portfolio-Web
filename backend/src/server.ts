@@ -68,8 +68,18 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Static files: serve uploads from the compiled directory (dist/uploads)
+// Fallbacks are included to cover different deploy layouts
+(() => {
+  const candidates = [
+    path.resolve(__dirname, './uploads'),        // dist/uploads (preferred; where admin.ts writes)
+    path.resolve(__dirname, '../uploads'),       // projectRoot/uploads (older path)
+    path.resolve(process.cwd(), 'uploads'),      // cwd/uploads (last resort)
+  ];
+  for (const dir of candidates) {
+    app.use('/uploads', express.static(dir));
+  }
+})();
 
 // Serve admin dashboard at a discreet path (/gdash) without exposing a link
 app.get('/gdash', (req: Request, res: Response) => {
