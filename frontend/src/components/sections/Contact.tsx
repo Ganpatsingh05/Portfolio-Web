@@ -87,7 +87,7 @@ export default function Contact() {
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent mb-4 sm:mb-6">
             Let's Work Together
           </h2>
-          <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed px-1">
+          <p className="text-base sm:text-lg md:text-xl text-gray-800 dark:text-white max-w-3xl mx-auto leading-relaxed px-1">
             Ready to bring your ideas to life? Let's collaborate and create something amazing together!
           </p>
           
@@ -99,15 +99,15 @@ export default function Contact() {
             viewport={{ once: true }}
             className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 mt-6 sm:mt-8"
           >
-            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
+            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-300">
               <FaCoffee className="text-xl" />
               <span className="font-semibold">100+ Cups of Coffee</span>
             </div>
-            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
+            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-300">
               <FaCode className="text-xl" />
               <span className="font-semibold">50+ Projects Completed</span>
             </div>
-            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
+            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-300">
               <FaHeart className="text-xl" />
               <span className="font-semibold">Made with Passion</span>
             </div>
@@ -125,7 +125,7 @@ export default function Contact() {
           >
             <div className="text-center mb-8">
               <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Send a Message</h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">I'll get back to you within 24 hours!</p>
+              <p className="text-gray-800 dark:text-white text-sm sm:text-base">I'll get back to you within 24 hours!</p>
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -233,8 +233,8 @@ export default function Contact() {
             className="space-y-6 sm:space-y-8"
           >
             <div className="rounded-2xl p-5 sm:p-6 md:p-8 border backdrop-blur-sm bg-white/90 dark:bg-white/5 border-orange-200 dark:border-orange-500/20">
-              <h3 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white">Get In Touch</h3>
-              <p className="text-gray-700 dark:text-gray-300 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base">
+              <h3 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-gray-900 drop-shadow-sm">Get In Touch</h3>
+              <p className="text-gray-800 dark:text-gray-800 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base drop-shadow-sm">
                 I'm always excited to work on new projects and collaborate with amazing people. 
                 Whether you have a specific project in mind or just want to explore possibilities, 
                 let's connect and make something incredible together!
@@ -250,8 +250,8 @@ export default function Contact() {
                     <FaEnvelope className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-orange-700 dark:text-orange-300 group-hover:text-orange-600 dark:group-hover:text-orange-200 transition-colors text-sm sm:text-base">Email</h4>
-                    <p className="text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors text-sm sm:text-base">ganpatsingh.tech@gmail.com</p>
+                    <h4 className="font-semibold text-orange-700 dark:text-orange-800 group-hover:text-orange-600 dark:group-hover:text-orange-700 transition-colors text-sm sm:text-base drop-shadow-sm">Email</h4>
+                    <p className="text-gray-800 dark:text-gray-900 group-hover:text-gray-900 dark:group-hover:text-black transition-colors text-sm sm:text-base drop-shadow-sm">ganpatsingh.tech@gmail.com</p>
                   </div>
                 </motion.div>
 
@@ -263,15 +263,15 @@ export default function Contact() {
                     <FaMapMarkerAlt className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-orange-700 dark:text-orange-300 group-hover:text-orange-600 dark:group-hover:text-orange-200 transition-colors text-sm sm:text-base">Location</h4>
-                    <p className="text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors text-sm sm:text-base">Available Worldwide (Remote)</p>
+                    <h4 className="font-semibold text-orange-700 dark:text-orange-800 group-hover:text-orange-600 dark:group-hover:text-orange-700 transition-colors text-sm sm:text-base drop-shadow-sm">Location</h4>
+                    <p className="text-gray-800 dark:text-gray-900 group-hover:text-gray-900 dark:group-hover:text-black transition-colors text-sm sm:text-base drop-shadow-sm">Available Worldwide (Remote)</p>
                   </div>
                 </motion.div>
               </div>
 
               {/* Social Links */}
               <div className="mt-8">
-                <h4 className="font-semibold mb-4 sm:mb-6 text-orange-300 text-base sm:text-lg">Connect With Me</h4>
+                <h4 className="font-semibold mb-4 sm:mb-6 text-orange-700 dark:text-orange-800 text-base sm:text-lg drop-shadow-sm">Connect With Me</h4>
                 <div className="flex space-x-3 sm:space-x-4">
                   <motion.button
                     onClick={() => openSocialLink("https://leetcode.com/u/Ganpat_singh/")}
@@ -325,8 +325,8 @@ export default function Contact() {
               className="backdrop-blur-sm rounded-2xl p-5 sm:p-6 border text-center bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-500/20 dark:to-amber-500/20 border-orange-200 dark:border-orange-400/30 text-gray-900 dark:text-white"
             >
               <FaRocket className="text-2xl sm:text-3xl text-orange-500 dark:text-orange-400 mx-auto mb-2 sm:mb-3" />
-              <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">Quick Response Guaranteed</h4>
-              <p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">I typically respond within 4-6 hours during business days!</p>
+              <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2 text-gray-900 dark:text-white">Quick Response Guaranteed</h4>
+              <p className="text-gray-800 dark:text-white text-sm sm:text-base">I typically respond within 4-6 hours during business days!</p>
             </motion.div>
           </motion.div>
         </div>

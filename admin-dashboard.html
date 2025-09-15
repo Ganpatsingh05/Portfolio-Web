@@ -697,6 +697,7 @@
                                                 </span>
                                             </div>
                                             <p class="text-gray-600 mb-2" x-text="message.email || 'No email'"></p>
+                                            <p class="text-blue-600 font-medium mb-2" x-text="'Subject: ' + (message.subject || 'No subject')"></p>
                                             <p class="text-gray-800 mb-4" x-text="message.message || 'No message content'"></p>
                                             <p class="text-sm text-gray-500" x-text="formatDate(message.created_at || new Date())"></p>
                                         </div>
@@ -1546,10 +1547,13 @@
 
         async fetchMessages() {
                     try {
-            const response = await fetch('\/api/contact');
+            const response = await fetch(`${LHOST}/api/contact`);
 
                         if (response.ok) {
-                            this.messages = await response.json();
+                            const messages = await response.json();
+                            console.log('Fetched messages:', messages);
+                            console.log('First message:', messages[0]);
+                            this.messages = messages;
                         }
                     } catch (error) {
                         console.error('Error fetching messages:', error);
