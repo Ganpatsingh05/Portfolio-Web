@@ -148,6 +148,23 @@ CREATE TABLE testimonials (
 );
 
 -- ================================================
+-- 9. SITE SETTINGS TABLE (Single row configuration)
+-- ================================================
+CREATE TABLE site_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  maintenance_mode BOOLEAN DEFAULT false,
+  show_analytics BOOLEAN DEFAULT true,
+  featured_sections TEXT[], -- e.g., ARRAY['projects','skills','experiences']
+  hero_headline VARCHAR(200),
+  hero_subheadline VARCHAR(400),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Ensure exactly one row (application logic will enforce; optionally add a unique partial index if needed)
+
+
+-- ================================================
 -- INDEXES FOR PERFORMANCE
 -- ================================================
 CREATE INDEX idx_projects_featured ON projects(featured);

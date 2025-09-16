@@ -40,7 +40,9 @@ export default function Experience() {
         if (!response.ok) {
           throw new Error('Failed to fetch experiences')
         }
-        const data = await response.json()
+        const result = await response.json()
+        // Extract the data array from the response wrapper
+        const data = result.data || result || []
         setExperiences(data)
       } catch (err) {
         console.error('Error fetching experiences:', err)

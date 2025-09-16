@@ -1,3 +1,95 @@
+## Admin Dashboard (Next.js) Redesign
+
+The legacy static `admin-dashboard.html` has been fully removed; the single source of truth is the Next.js admin panel located under `frontend/src/app/admin`.
+
+### Features
+* Secure login (`/admin/login`) using existing backend `/api/admin/login` endpoint
+* Dashboard overview with project / skills / messages / views counts
+* CRUD Interfaces:
+   * Projects: list, create, update, delete
+   * Skills: list, create, update, delete (slider for level)
+   * Experiences: list, create, update, delete (multi-line -> bullet list)
+* Messages viewer: filter All / Unread / Read, mark as read, subject clearly visible
+* Personal info editor with resume upload (Cloudinary or local fallback) and profile metadata
+* Site settings page (maintenance mode, hero text, featured sections, analytics toggle)
+* Centralized auth guard component to protect all admin routes
+
+### Environment Variable
+Set `NEXT_PUBLIC_BACKEND_URL` in `frontend/.env.local` to point to the deployed backend (no trailing slash), e.g.
+
+```
+NEXT_PUBLIC_BACKEND_URL=https://portfolio-web-gsr.onrender.com
+```
+
+### Adding / Updating Admin Pages
+Pages live at:
+```
+frontend/src/app/admin/
+   login/page.tsx
+   page.tsx              (Dashboard)
+   projects/page.tsx
+   skills/page.tsx
+   experiences/page.tsx
+   messages/page.tsx
+   personal/page.tsx
+```
+
+Shared API client: `frontend/src/lib/admin/api.ts` centralizes authenticated fetch logic and exposes typed helpers.
+
+### Authentication Flow
+1. User logs in at `/admin/login` => stores JWT in `localStorage` under `adminToken`.
+2. All admin pages are wrapped by a `RequireAuth` client component in `admin/layout.tsx` that validates token presence & expiration.
+3. API errors with 401 automatically clear the token.
+4. Optional redirect query param `?next=` is honored post-login.
+
+### Site Settings
+Location: `/admin/settings`
+
+Backend endpoints:
+* `GET /api/admin/settings` – fetch single settings row (returns defaults if none exists)
+* `PUT /api/admin/settings` – upsert settings (fields: `maintenance_mode`, `show_analytics`, `featured_sections[]`, `hero_headline`, `hero_subheadline`)
+
+Database table (`site_settings`):
+```
+id UUID PK
+maintenance_mode BOOLEAN DEFAULT false
+show_analytics BOOLEAN DEFAULT true
+featured_sections TEXT[]
+hero_headline VARCHAR(200)
+hero_subheadline VARCHAR(400)
+created_at TIMESTAMPTZ
+updated_at TIMESTAMPTZ
+```
+
+The UI allows:
+* Toggling Maintenance Mode (can later be consumed by frontend to show a banner)
+* Enabling/disabling analytics visualization
+* Selecting featured sections (projects, skills, experiences, testimonials, blog)
+* Custom hero headline & subheadline (optional override content)
+
+Implementation files:
+* Backend route additions in: `backend/src/routes/admin.ts` (settings GET/PUT)
+* Frontend API client: `frontend/src/lib/admin/api.ts` (`settings.get()`, `settings.update()`)
+* Page component: `frontend/src/app/admin/settings/page.tsx`
+
+Future ideas:
+* Add favicon / branding controls
+* JSON schema-based dynamic settings rendering
+* Multi-environment (draft vs published) settings
+
+### Resume Upload
+Uses `/api/admin/upload/resume` with `FormData`. If Cloudinary credentials are invalid, backend falls back to local storage and returns a public URL.
+
+### Migration Notes
+* Legacy static admin dashboard files and routes removed; Next.js admin (`/frontend/src/app/admin`) is now the sole interface.
+* All admin UI uses Tailwind + React state; no Alpine.js.
+
+### Future Enhancements (Ideas)
+* Add pagination / search for messages
+* Role-based multi-user admin
+* Inline analytics charts (sparkline of views)
+* Drag-and-drop project image upload / reordering
+
 # Ganpat Singh - Portfolio Website
 
 A modern, responsive portfolio website built with Next.js frontend and Node.js backend.

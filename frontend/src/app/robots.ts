@@ -7,8 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: [
         '/private/',
-        '/gdash',
-        '/admin.html',
         '/uploads/',
         '/api/',
       ],

@@ -24,15 +24,7 @@ const nextConfig: NextConfig = {
         source: '/api/:path*',
         destination: `${backendUrl}/api/:path*`,
       },
-      // Proxy admin dashboard and its CSS from backend so it can be accessed on the frontend domain
-      {
-        source: '/gdash',
-        destination: `${backendUrl}/gdash`,
-      },
-      {
-        source: '/gdash.css',
-        destination: `${backendUrl}/gdash.css`,
-      },
+      // (Legacy admin dashboard rewrites removed)
       // Optional: serve uploaded files through the frontend domain as well
       {
         source: '/uploads/:path*',
@@ -46,18 +38,7 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
-      {
-        source: "/admin.html",
-        headers: [
-          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
-        ],
-      },
-      {
-        source: "/gdash",
-        headers: [
-          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
-        ],
-      },
+      // (Legacy admin dashboard headers removed)
     ];
   },
 };

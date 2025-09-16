@@ -9,7 +9,6 @@ import path from 'path';
 import projectsRouter from './routes/projects';
 import contactRouter from './routes/contact';
 import analyticsRouter from './routes/analytics';
-import personalInfoRouter from './routes/personal-info';
 import adminRouter from './routes/admin';
 import uploadsRouter from './routes/uploads';
 import publicRouter from './routes/public';
@@ -82,14 +81,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   }
 })();
 
-// Serve admin dashboard at a discreet path (/gdash) without exposing a link
-app.get('/gdash', (req: Request, res: Response) => {
-  res.sendFile(path.resolve(__dirname, '../../admin-dashboard.html'));
-});
-// Serve its CSS (linked relatively as /admin.css or we can reference /gdash.css; keep simple)
-app.get('/gdash.css', (req: Request, res: Response) => {
-  res.sendFile(path.resolve(__dirname, '../../admin.css'));
-});
+// (Legacy /gdash static admin removed) -- old static dashboard fully deprecated in favor of Next.js admin.
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
@@ -114,7 +106,6 @@ app.get('/api/health', (req: Request, res: Response) => {
 app.use('/api/projects', projectsRouter);
 app.use('/api/contact', contactRouter);
 app.use('/api/analytics', analyticsRouter);
-app.use('/api/personal-info', personalInfoRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/uploads', uploadsRouter);
 // Public, unauthenticated routes expected by the frontend hooks

@@ -167,75 +167,6 @@ router.get('/dashboard', authenticateAdmin, async (req: Request, res: Response) 
   }
 });
 
-// Update personal info
-router.put('/personal-info', authenticateAdmin, [
-  body('name').optional().notEmpty(),
-  body('title').optional().notEmpty(),
-  body('email').optional().isEmail(),
-], async (req: Request, res: Response) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    // Extract only valid personal info fields and include only provided (defined) keys
-    const allowedKeys = [
-      'name',
-      'title',
-      'email',
-      'phone',
-      'location',
-      'bio',
-      'linkedin_url',
-      'github_url',
-      'twitter_url',
-      'website_url',
-      'resume_url',
-      'profile_image_url'
-    ] as const;
-
-    const updateData: Record<string, any> = {};
-    for (const key of allowedKeys) {
-      if (Object.prototype.hasOwnProperty.call(req.body, key) && req.body[key] !== undefined) {
-        updateData[key] = req.body[key];
-      }
-    }
-    updateData.updated_at = new Date().toISOString();
-
-    // Get (or create) the single personal_info row
-    const { data: existingData } = await supabase
-      .from('personal_info')
-      .select('id')
-      .limit(1)
-      .single();
-
-    let personalInfo;
-    if (existingData) {
-      const { data, error } = await supabase
-        .from('personal_info')
-        .update(updateData)
-        .eq('id', existingData.id)
-        .select()
-        .single();
-      if (error) throw error;
-      personalInfo = data;
-    } else {
-      const { data, error } = await supabase
-        .from('personal_info')
-        .insert([updateData])
-        .select()
-        .single();
-      if (error) throw error;
-      personalInfo = data;
-    }
-
-    res.json(personalInfo);
-  } catch (error) {
-    console.error('Update personal info error:', error);
-    res.status(500).json({ error: 'Failed to update personal information' });
-  }
-});
 
 // Manage projects
 // List projects (admin)
@@ -380,109 +311,6 @@ router.delete('/projects/:id', authenticateAdmin, async (req: Request, res: Resp
   }
 });
 
-// Manage skills
-router.post('/skills', authenticateAdmin, [
-  body('name').notEmpty().withMessage('Skill name is required'),
-  body('level').isInt({ min: 0, max: 100 }).withMessage('Level must be between 0-100'),
-  body('category').notEmpty().withMessage('Category is required'),
-], async (req: Request, res: Response) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    // Extract only valid skill fields
-    const {
-      name,
-      level,
-      category,
-      icon_name,
-      sort_order,
-      is_featured
-    } = req.body;
-
-    const skillData = {
-      name,
-      level: parseInt(level),
-      category,
-      icon_name,
-      sort_order: sort_order || 0,
-      is_featured: is_featured || false
-    };
-
-    const { data: skill, error } = await supabase
-      .from('skills')
-      .insert([skillData])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    res.status(201).json(skill);
-  } catch (error) {
-    console.error('Create skill error:', error);
-    res.status(500).json({ error: 'Failed to create skill' });
-  }
-});
-
-router.put('/skills/:id', authenticateAdmin, async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    // Extract only valid skill fields
-    const {
-      name,
-      level,
-      category,
-      icon_name,
-      sort_order,
-      is_featured
-    } = req.body;
-
-    const updateData = {
-      name,
-      level: parseInt(level),
-      category,
-      icon_name,
-      sort_order,
-      is_featured,
-      updated_at: new Date().toISOString()
-    };
-
-    const { data: skill, error } = await supabase
-      .from('skills')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    res.json(skill);
-  } catch (error) {
-    console.error('Update skill error:', error);
-    res.status(500).json({ error: 'Failed to update skill' });
-  }
-});
-
-router.delete('/skills/:id', authenticateAdmin, async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    const { error } = await supabase
-      .from('skills')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-
-    res.json({ message: 'Skill deleted successfully' });
-  } catch (error) {
-    console.error('Delete skill error:', error);
-    res.status(500).json({ error: 'Failed to delete skill' });
-  }
-});
 
 // Get all contact messages
 router.get('/messages', authenticateAdmin, async (req: Request, res: Response) => {
@@ -904,4 +732,100 @@ router.post('/upload/resume', authenticateAdmin, resumeUpload.single('resume'), 
   }
 });
 
+// ==================== SITE SETTINGS MANAGEMENT ====================
+// Get site settings (single row)
+router.get('/settings', authenticateAdmin, async (req: Request, res: Response) => {
+  try {
+    const { data: settings, error } = await supabase
+      .from('site_settings')
+      .select('*')
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = No rows found for single
+      throw error;
+    }
+
+    if (!settings) {
+      // Return defaults if no row yet
+      return res.json({
+        maintenance_mode: false,
+        show_analytics: true,
+        featured_sections: ['projects', 'skills', 'experiences'],
+        hero_headline: null,
+        hero_subheadline: null
+      });
+    }
+    res.json(settings);
+  } catch (error) {
+    console.error('Error fetching site settings:', error);
+    res.status(500).json({ error: 'Failed to fetch site settings' });
+  }
+});
+
+// Update site settings (upsert single row)
+router.put('/settings', authenticateAdmin, [
+  body('maintenance_mode').optional().isBoolean(),
+  body('show_analytics').optional().isBoolean(),
+  body('featured_sections').optional().isArray(),
+  body('hero_headline').optional().isString().isLength({ max: 200 }),
+  body('hero_subheadline').optional().isString().isLength({ max: 400 })
+], async (req: Request, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const allowedKeys = ['maintenance_mode','show_analytics','featured_sections','hero_headline','hero_subheadline'] as const;
+    const updateData: Record<string, any> = {};
+    for (const key of allowedKeys) {
+      if (Object.prototype.hasOwnProperty.call(req.body, key)) {
+        updateData[key] = (req.body as any)[key];
+      }
+    }
+    updateData.updated_at = new Date().toISOString();
+
+    // Check if a row exists
+    const { data: existing, error: existingError } = await supabase
+      .from('site_settings')
+      .select('id')
+      .limit(1)
+      .single();
+
+    if (existingError && existingError.code !== 'PGRST116') {
+      throw existingError;
+    }
+
+    let result;
+    if (existing) {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .update(updateData)
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (error) throw error;
+      result = data;
+    } else {
+      if (!updateData.featured_sections) {
+        updateData.featured_sections = ['projects','skills','experiences'];
+      }
+      const { data, error } = await supabase
+        .from('site_settings')
+        .insert([updateData])
+        .select()
+        .single();
+      if (error) throw error;
+      result = data;
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error updating site settings:', error);
+    res.status(500).json({ error: 'Failed to update site settings' });
+  }
+});
+
 export default router;
+

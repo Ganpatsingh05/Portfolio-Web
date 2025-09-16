@@ -130,7 +130,9 @@ export default function Skills() {
         if (!response.ok) {
           throw new Error('Failed to fetch skills')
         }
-        const data = await response.json()
+        const result = await response.json()
+        // Extract the data array from the response wrapper
+        const data = result.data || result || []
         // Sort by category (asc), then level desc, then name asc
         const sorted = (data as Skill[]).slice().sort((a, b) => {
           const ca = (a.category || '').toLowerCase()

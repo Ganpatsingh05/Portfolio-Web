@@ -1,93 +1,84 @@
-'use client'
+"use client";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { adminApi, ensureAuthedClient } from '@/lib/admin/api';
 
-import { useState, useEffect } from 'react'
+interface Stats { projects: number; skills: number; messages: number; pageViews: number; }
 
-interface Analytics {
-  totalViews: number
-  projectClicks: number
-  resumeDownloads: number
-  recentActivity: any[]
-}
-
-export default function AdminDashboard() {
-  const [analytics, setAnalytics] = useState<Analytics | null>(null)
-  const [messages, setMessages] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+export default function AdminHome() {
+  const router = useRouter();
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [recentMessages, setRecentMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchData() {
+    if (!ensureAuthedClient()) { router.replace('/admin/login'); return; }
+    (async () => {
       try {
-        // Fetch analytics
-        const analyticsRes = await fetch('/api/analytics')
-        const analyticsData = await analyticsRes.json()
-        setAnalytics(analyticsData.data)
+        const dash = await adminApi.dashboard();
+        setStats(dash.stats);
+        setRecentMessages(dash.recentMessages || []);
+      } catch (e: any) {
+        if (e.status === 401) { router.replace('/admin/login'); return; }
+        setError(e.message || 'Failed to load dashboard');
+      } finally { setLoading(false); }
+    })();
+  }, [router]);
 
-        // Fetch recent messages
-        const messagesRes = await fetch('/api/contact')
-        const messagesData = await messagesRes.json()
-        setMessages(messagesData.data?.slice(0, 5) || [])
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [])
-
-  if (loading) {
-    return <div>Loading dashboard...</div>
-  }
+  if (loading) return <div className="p-8">Loading dashboard...</div>;
+  if (error) return <div className="p-8 text-red-600">{error}</div>;
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
-      
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Total Views</h3>
-          <p className="text-3xl font-bold text-blue-600">{analytics?.totalViews || 0}</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Project Clicks</h3>
-          <p className="text-3xl font-bold text-green-600">{analytics?.projectClicks || 0}</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Resume Downloads</h3>
-          <p className="text-3xl font-bold text-purple-600">{analytics?.resumeDownloads || 0}</p>
-        </div>
-      </div>
+    <div className="space-y-10">
+      <header className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard Overview</h1>
+        <button onClick={() => location.reload()} className="text-sm font-medium bg-white border border-gray-300 hover:bg-gray-50 px-3 py-2 rounded-md shadow-sm">Refresh</button>
+      </header>
 
-      {/* Recent Messages */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Recent Messages</h2>
+      <section>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard label="Projects" value={stats?.projects ?? 0} color="blue" />
+          <StatCard label="Skills" value={stats?.skills ?? 0} color="green" />
+          <StatCard label="Messages" value={stats?.messages ?? 0} color="amber" />
+          <StatCard label="Views" value={stats?.pageViews ?? 0} color="purple" />
         </div>
-        <div className="divide-y">
-          {messages.length > 0 ? (
-            messages.map((message) => (
-              <div key={message.id} className="p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium text-gray-900">{message.name}</h4>
-                    <p className="text-sm text-gray-600">{message.email}</p>
-                    <p className="text-sm text-gray-800 mt-2">{message.subject}</p>
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {new Date(message.created_at).toLocaleDateString()}
-                  </span>
-                </div>
+      </section>
+
+      <section className="bg-white rounded-lg shadow border">
+        <div className="p-6 border-b flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Recent Messages</h2>
+          <a href="/admin/messages" className="text-sm text-blue-600 hover:text-blue-700">View all</a>
+        </div>
+        <ul className="divide-y">
+          {recentMessages.length === 0 && <li className="p-6 text-sm text-gray-500">No messages yet.</li>}
+          {recentMessages.map(m => (
+            <li key={m.id} className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <p className="font-medium text-gray-900">{m.name || 'Anonymous'} <span className="text-gray-400 font-normal">&lt;{m.email}&gt;</span></p>
+                <p className="text-sm text-blue-600 font-medium mt-1">Subject: {m.subject || 'No subject'}</p>
+                <p className="text-sm text-gray-600 line-clamp-2 mt-1 max-w-xl">{m.message}</p>
               </div>
-            ))
-          ) : (
-            <div className="p-6 text-center text-gray-500">
-              No messages yet
-            </div>
-          )}
-        </div>
-      </div>
+              <time className="text-xs text-gray-400 whitespace-nowrap">{new Date(m.created_at).toLocaleString()}</time>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
-  )
+  );
+}
+
+function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
+  const colorMap: Record<string, string> = {
+    blue: 'text-blue-600 bg-blue-50',
+    green: 'text-green-600 bg-green-50',
+    amber: 'text-amber-600 bg-amber-50',
+    purple: 'text-purple-600 bg-purple-50'
+  };
+  return (
+    <div className="bg-white rounded-lg shadow p-6 border flex flex-col">
+      <span className="text-sm font-medium text-gray-500 mb-2">{label}</span>
+      <span className={`text-4xl font-bold tracking-tight ${colorMap[color] || ''} inline-block px-2 rounded`}>{value}</span>
+    </div>
+  );
 }
