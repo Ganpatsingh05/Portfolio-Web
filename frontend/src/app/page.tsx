@@ -3,7 +3,12 @@
 import Navigation from '@/components/ui/Navigation'
 import ResponsiveLayout from '@/components/layout/ResponsiveLayout'
 import AOSInit from '@/components/animations/AOSInit'
+import BackendDebugPanel from '@/components/debug/BackendDebugPanel'
 import { useEffect } from 'react'
+
+// Import debug tools to make them available globally
+import '@/utils/backend-test'
+import '@/utils/debug-tools'
 
 function PageViewTracker() {
   useEffect(() => {
@@ -33,6 +38,7 @@ export default function Home() {
       <AOSInit />
       <Navigation />
       <ResponsiveLayout />
+      <BackendDebugPanel />
     </main>
   )
 }
