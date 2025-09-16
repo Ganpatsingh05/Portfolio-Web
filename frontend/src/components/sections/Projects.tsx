@@ -94,12 +94,18 @@ export default function Projects() {
         
         const result = await response.json()
         
+        // Handle both { data: [] } format and raw array format
+        let projectsData = [];
         if (result.data && Array.isArray(result.data)) {
-          setProjects(result.data)
+          projectsData = result.data;
+        } else if (Array.isArray(result)) {
+          projectsData = result;
         } else {
-          console.warn('Invalid projects data format, using fallback')
-          setProjects(fallbackProjects)
+          console.warn('Invalid projects data format, using fallback');
+          projectsData = fallbackProjects;
         }
+        
+        setProjects(projectsData);
       } catch (error) {
         console.error('Error fetching projects:', error)
         setError('Failed to load projects')
