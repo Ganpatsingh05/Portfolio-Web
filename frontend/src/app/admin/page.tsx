@@ -13,16 +13,36 @@ export default function AdminHome() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!ensureAuthedClient()) { router.replace('/admin/login'); return; }
+    console.log('=== AdminHome useEffect ===');
+    console.log('ensureAuthedClient():', ensureAuthedClient());
+    
+    if (!ensureAuthedClient()) { 
+      console.log('Not authenticated, redirecting to login');
+      router.replace('/admin/login'); 
+      return; 
+    }
+    
+    console.log('User is authenticated, calling dashboard API');
+    
     (async () => {
       try {
+        console.log('Making dashboard API call...');
         const dash = await adminApi.dashboard();
+        console.log('Dashboard API response:', dash);
         setStats(dash.stats);
         setRecentMessages(dash.recentMessages || []);
       } catch (e: any) {
-        if (e.status === 401) { router.replace('/admin/login'); return; }
+        console.error('Dashboard API error:', e);
+        if (e.status === 401) { 
+          console.log('Got 401 error, redirecting to login');
+          router.replace('/admin/login'); 
+          return; 
+        }
         setError(e.message || 'Failed to load dashboard');
-      } finally { setLoading(false); }
+      } finally { 
+        console.log('Dashboard loading complete');
+        setLoading(false); 
+      }
     })();
   }, [router]);
 
