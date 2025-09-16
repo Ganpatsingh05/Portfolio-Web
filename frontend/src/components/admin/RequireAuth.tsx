@@ -7,6 +7,13 @@ import { useRouter, usePathname } from 'next/navigation';
 
 function parseJwt(token: string): any | null {
   try {
+    // Handle temporary token format (temp.payload.temp)
+    if (token.startsWith('temp.') && token.endsWith('.temp')) {
+      const payload = token.slice(5, -5); // Remove 'temp.' prefix and '.temp' suffix
+      return JSON.parse(atob(payload));
+    }
+    
+    // Handle regular JWT format
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {

@@ -2,7 +2,7 @@
 // Uses backend API base URL from env: NEXT_PUBLIC_BACKEND_URL
 // Handles auth token (stored in localStorage under 'adminToken')
 
-export const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '') || 'http://localhost:5000';
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:5000';
 
 function getToken() {
   if (typeof window === 'undefined') return undefined;
@@ -50,10 +50,30 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const adminApi = {
-  login: (username: string, password: string) => request<{token: string; user: any; message: string}>(`/api/admin/login`, {
-    method: 'POST',
-    body: JSON.stringify({ username, password })
-  }),
+  login: async (username: string, password: string) => {
+    try {
+      // Try backend first
+      return await request<{token: string; user: any; message: string}>(`/api/admin/login`, {
+        method: 'POST',
+        body: JSON.stringify({ username, password })
+      });
+    } catch (error) {
+      // Fallback to Next.js API route if backend is not available
+      console.warn('Backend not available, using fallback authentication');
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Login failed' }));
+        throw new ApiError(errorData.error || 'Login failed', res.status, errorData);
+      }
+      
+      return await res.json();
+    }
+  },
   dashboard: () => request<{stats: any; recentMessages: any[]; recentViews: any[]}>(`/api/admin/dashboard`),
   projects: {
     list: () => request<any[]>(`/api/admin/projects`),
