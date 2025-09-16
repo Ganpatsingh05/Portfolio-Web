@@ -33,15 +33,8 @@ export const downloadResume = async () => {
       const personalInfo = result.data || result
       
       if (personalInfo.resume_url) {
-        // Use dynamic resume URL from database
-        const link = document.createElement('a')
-        link.href = personalInfo.resume_url
-        link.download = `${personalInfo.name || 'Ganpat_Singh'}_Resume.pdf`
-        link.target = '_blank'
-        
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        // Use dynamic resume URL from database - open directly since it's from backend
+        window.open(personalInfo.resume_url, '_blank')
         
         // Track analytics
         try {
@@ -64,24 +57,36 @@ export const downloadResume = async () => {
     }
   } catch (error) {
     console.error('Error fetching dynamic resume:', error)
+    // If CORS error, try direct backend URL as fallback
+    if (error instanceof Error && error.message.includes('CORS')) {
+      window.open('https://portfolio-web-gsr.onrender.com/uploads/resumes/resume_1756821195010.pdf', '_blank')
+      return
+    }
   }
   
   // Fallback to static resume
   const resumeUrl = '/resume/Ganpat_Singh_Resume.pdf'
   
-  const link = document.createElement('a')
-  link.href = resumeUrl
-  link.download = 'Ganpat_Singh_Resume.pdf'
-  link.target = '_blank'
-  
-  // Fallback: if file doesn't exist, open a placeholder or show message
-  link.onerror = () => {
-    alert('Resume will be available soon! Please contact me directly for now.')
+  // Check if static resume exists, if not show message
+  try {
+    const checkResponse = await fetch(resumeUrl, { method: 'HEAD' })
+    if (checkResponse.ok) {
+      const link = document.createElement('a')
+      link.href = resumeUrl
+      link.download = 'Ganpat_Singh_Resume.pdf'
+      link.target = '_blank'
+      
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } else {
+      throw new Error('Static resume not found')
+    }
+  } catch (staticError) {
+    // Final fallback: direct link to backend resume
+    alert('Opening resume in new tab...')
+    window.open('https://portfolio-web-gsr.onrender.com/uploads/resumes/resume_1756821195010.pdf', '_blank')
   }
-  
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
   
   // Track analytics for fallback
   try {
@@ -92,7 +97,7 @@ export const downloadResume = async () => {
       },
       body: JSON.stringify({
         event_type: 'resume_download',
-        event_data: { source: 'static', filename: 'Ganpat_Singh_Resume.pdf' },
+        event_data: { source: 'fallback', filename: 'Ganpat_Singh_Resume.pdf' },
       }),
     })
   } catch (analyticsError) {
