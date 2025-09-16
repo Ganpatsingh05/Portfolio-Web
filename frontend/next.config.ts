@@ -27,13 +27,14 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+    // Use production backend URL for Vercel deployments
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'https://portfolio-web-gsr.onrender.com';
+    
     return [
       {
         source: '/api/:path*',
         destination: `${backendUrl}/api/:path*`,
       },
-      // (Legacy admin dashboard rewrites removed)
       // Optional: serve uploaded files through the frontend domain as well
       {
         source: '/uploads/:path*',

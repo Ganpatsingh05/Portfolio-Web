@@ -1,7 +1,10 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build:vercel",
   "outputDirectory": ".next",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "rootDirectory": "frontend"
+  "rootDirectory": "frontend",
+  "env": {
+    "BACKEND_URL": "https://portfolio-web-gsr.onrender.com"
+  }
 }
