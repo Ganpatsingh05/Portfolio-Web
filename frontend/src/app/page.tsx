@@ -9,6 +9,7 @@ import { useEffect } from 'react'
 // Import debug tools to make them available globally
 import '@/utils/backend-test'
 import '@/utils/debug-tools'
+import '@/utils/diagnostics'
 
 function PageViewTracker() {
   useEffect(() => {

@@ -33,36 +33,47 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration
-// Supports comma-separated list in CORS_ORIGIN and wildcard entries like *.vercel.app
+// ================= CORS CONFIGURATION =================
+// Enhanced: captures derived allowed origins for diagnostics & provides optional ALLOW_LOCALHOST override
+const derivedAllowedOrigins: string[] = [];
+const configuredOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+if (configuredOrigins.length) {
+  derivedAllowedOrigins.push(...configuredOrigins);
+}
+if (process.env.ALLOW_LOCALHOST === 'true') {
+  derivedAllowedOrigins.push('http://localhost:3000');
+}
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow everything in non-production for easier local/dev testing
-    if (process.env.NODE_ENV !== 'production') return callback(null, true);
-
-    const raw = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
-
-    // No Origin header (e.g., curl, Postman) -> allow
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    // Allow curl / server-to-server
     if (!origin) return callback(null, true);
 
     const isAllowed = (() => {
-      for (const entry of raw) {
-        // Exact match
+      for (const entry of derivedAllowedOrigins) {
         if (entry === origin) return true;
-        // Wildcard support: "*.example.com"
         if (entry.startsWith('*.')) {
           const base = entry.slice(1); // ".example.com"
-          if (origin.endsWith(base)) return true;
+            if (origin.endsWith(base)) return true;
         }
       }
       return false;
     })();
 
     if (isAllowed) return callback(null, true);
+    console.warn(`[CORS] Blocked origin: ${origin}`);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true
 }));
+// ======================================================
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -110,6 +121,71 @@ app.use('/api/admin', adminRouter);
 app.use('/api/uploads', uploadsRouter);
 // Public, unauthenticated routes expected by the frontend hooks
 app.use('/api', publicRouter);
+
+// Endpoint inventory for diagnostics
+app.get('/api/_endpoints', (req: Request, res: Response) => {
+  const endpoints = [
+    // Health
+    { method: 'GET', path: '/health', public: true },
+    { method: 'GET', path: '/api/health', public: true },
+    // Public content
+    { method: 'GET', path: '/api/personal-info', public: true },
+    { method: 'GET', path: '/api/projects', public: true },
+    { method: 'GET', path: '/api/skills', public: true },
+    { method: 'GET', path: '/api/experiences', public: true },
+    { method: 'POST', path: '/api/analytics', public: true },
+    // Contact
+    { method: 'POST', path: '/api/contact', public: true },
+    // Analytics extended
+    { method: 'POST', path: '/api/analytics/page-view', public: true },
+    { method: 'POST', path: '/api/analytics/event', public: true },
+    { method: 'GET', path: '/api/analytics', public: true },
+    { method: 'GET', path: '/api/analytics/summary', public: true },
+    { method: 'GET', path: '/api/analytics/detailed', public: true },
+    // Admin auth
+    { method: 'POST', path: '/api/admin/login', auth: false },
+    // Admin protected collections
+    { method: 'GET', path: '/api/admin/dashboard', auth: true },
+    { method: 'GET', path: '/api/admin/projects', auth: true },
+    { method: 'POST', path: '/api/admin/projects', auth: true },
+    { method: 'PUT', path: '/api/admin/projects/:id', auth: true },
+    { method: 'DELETE', path: '/api/admin/projects/:id', auth: true },
+    { method: 'GET', path: '/api/admin/skills', auth: true },
+    { method: 'POST', path: '/api/admin/skills', auth: true },
+    { method: 'PUT', path: '/api/admin/skills/:id', auth: true },
+    { method: 'DELETE', path: '/api/admin/skills/:id', auth: true },
+    { method: 'GET', path: '/api/admin/experiences', auth: true },
+    { method: 'POST', path: '/api/admin/experiences', auth: true },
+    { method: 'PUT', path: '/api/admin/experiences/:id', auth: true },
+    { method: 'DELETE', path: '/api/admin/experiences/:id', auth: true },
+    { method: 'GET', path: '/api/admin/messages', auth: true },
+    { method: 'PUT', path: '/api/admin/messages/:id/read', auth: true },
+    { method: 'GET', path: '/api/admin/personal-info', auth: true },
+    { method: 'PUT', path: '/api/admin/personal-info', auth: true },
+    { method: 'GET', path: '/api/admin/settings', auth: true },
+    { method: 'PUT', path: '/api/admin/settings', auth: true },
+    { method: 'POST', path: '/api/admin/upload/resume', auth: true },
+    // Uploads
+    { method: 'POST', path: '/api/uploads/image', auth: false },
+    { method: 'POST', path: '/api/uploads/resume', auth: false },
+    { method: 'DELETE', path: '/api/uploads/image/:publicId', auth: false }
+  ];
+  res.json({
+    environment: process.env.NODE_ENV,
+    total: endpoints.length,
+    endpoints
+  });
+});
+
+// CORS diagnostics endpoint
+app.get('/api/_cors', (req: Request, res: Response) => {
+  res.json({
+    environment: process.env.NODE_ENV,
+    configured: configuredOrigins,
+    derived: derivedAllowedOrigins,
+    allowLocalhostFlag: process.env.ALLOW_LOCALHOST === 'true'
+  });
+});
 
 // Default route
 app.get('/', (req: Request, res: Response) => {

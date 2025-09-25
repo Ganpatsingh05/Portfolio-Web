@@ -77,6 +77,21 @@ const authenticateAdmin = (req: Request, res: Response, next: any) => {
 };
 
 // Admin login
+// Helpful GET (browser visit) returns guidance instead of 404
+router.get('/login', (req: Request, res: Response) => {
+  res.status(405).json({
+    error: 'Method not allowed',
+    message: 'Use POST /api/admin/login with JSON: {"username":"...","password":"..."}',
+    expected: { method: 'POST', body: ['username','password'] }
+  });
+});
+
+// CORS / preflight convenience (some browsers / tools may send OPTIONS)
+router.options('/login', (req: Request, res: Response) => {
+  res.setHeader('Allow', 'POST, OPTIONS');
+  res.status(204).end();
+});
+
 router.post('/login', [
   body('username').notEmpty().withMessage('Username is required'),
   body('password').notEmpty().withMessage('Password is required'),

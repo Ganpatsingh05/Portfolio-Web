@@ -3,7 +3,34 @@ import supabase from '../lib/supabase';
 
 const router = Router();
 
-// Track page view
+// Generic analytics capture (backwards compatible with legacy frontend POST /api/analytics)
+router.post('/', async (req: Request, res: Response) => {
+  try {
+    const { event_type = 'event', event_data = {}, page = req.body?.page || null, metadata = req.body?.metadata || {} } = req.body || {};
+    const ip_address = (req.headers['x-forwarded-for']?.toString().split(',')[0] || req.ip || '').toString();
+    const user_agent = req.get('user-agent') || '';
+    const referrer = req.get('referer') || req.get('referrer') || '';
+
+    const insertPayload: any = {
+      event_type,
+      page,
+      ip_address,
+      user_agent,
+      referrer,
+      metadata,
+      event_data
+    };
+
+    const { error } = await supabase.from('analytics').insert([insertPayload]);
+    if (error) throw error;
+    return res.status(201).json({ message: 'Captured', event_type });
+  } catch (error) {
+    console.error('Generic analytics capture error:', error);
+    res.status(500).json({ error: 'Failed to capture analytics event' });
+  }
+});
+
+// Track page view (specific endpoint retained for explicit usage)
 router.post('/page-view', async (req: Request, res: Response) => {
   try {
     const { page, referrer, user_agent } = req.body;
@@ -31,7 +58,7 @@ router.post('/page-view', async (req: Request, res: Response) => {
   }
 });
 
-// Track custom event
+// Track custom event (alternative explicit endpoint)
 router.post('/event', async (req: Request, res: Response) => {
   try {
     const { event_type, page, metadata } = req.body;
@@ -59,7 +86,38 @@ router.post('/event', async (req: Request, res: Response) => {
   }
 });
 
-// Get analytics summary (admin only)
+// Quick summary at base GET / (counts & most recent) for diagnostics
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    const { data: latest, error: latestError } = await supabase
+      .from('analytics')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (latestError) throw latestError;
+
+    const { data: counts, error: countsError } = await supabase
+      .from('analytics')
+      .select('event_type');
+    if (countsError) throw countsError;
+
+    const countByType = (counts || []).reduce((acc: any, row: any) => {
+      acc[row.event_type] = (acc[row.event_type] || 0) + 1;
+      return acc;
+    }, {});
+
+    res.json({
+      total: counts?.length || 0,
+      byType: countByType,
+      recent: latest || []
+    });
+  } catch (error) {
+    console.error('Analytics base summary error:', error);
+    res.status(500).json({ error: 'Failed to fetch analytics summary' });
+  }
+});
+
+// Detailed summary (admin style) with days param
 router.get('/summary', async (req: Request, res: Response) => {
   try {
     const { days = 30 } = req.query;

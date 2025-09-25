@@ -269,6 +269,7 @@ export const testEndpoint = async (endpoint: string, method: string = 'GET', bod
   const fullUrl = endpoint.startsWith('http') ? endpoint : `${backendUrl}${endpoint}`;
   
   console.log(`🔍 Testing ${method} ${fullUrl}`);
+  console.log(`🌐 From origin: ${typeof window !== 'undefined' ? window.location.origin : 'Unknown'}`);
   
   try {
     const options: RequestInit = {
@@ -284,31 +285,85 @@ export const testEndpoint = async (endpoint: string, method: string = 'GET', bod
       options.body = JSON.stringify(body);
     }
     
+    console.log(`📤 Request options:`, options);
+    
     const start = Date.now();
     const response = await fetch(fullUrl, options);
     const responseTime = Date.now() - start;
     
-    console.log(`Status: ${response.status} ${response.statusText} (${responseTime}ms)`);
-    console.log('Headers:', Object.fromEntries(response.headers.entries()));
+    console.log(`📥 Status: ${response.status} ${response.statusText} (${responseTime}ms)`);
+    console.log(`📋 Response headers:`, Object.fromEntries(response.headers.entries()));
     
     if (response.ok) {
       try {
         const data = await response.json();
-        console.log('Response data:', data);
+        console.log('✅ Response data:', data);
         return { success: true, data, responseTime, status: response.status };
       } catch (parseError) {
         const text = await response.text();
-        console.log('Response text:', text);
+        console.log('✅ Response text:', text);
         return { success: true, data: text, responseTime, status: response.status };
       }
     } else {
       const errorText = await response.text();
-      console.error('Error response:', errorText);
+      console.error(`❌ Error response (${response.status}):`, errorText);
       return { success: false, error: errorText, responseTime, status: response.status };
     }
   } catch (error) {
-    console.error('Request failed:', error);
-    return { success: false, error: error instanceof Error ? error.message : String(error), responseTime: 0, status: 0 };
+    console.error('💥 Request failed with error:', error);
+    
+    // Provide more specific error information
+    let errorMessage = 'Unknown error';
+    let troubleshootingTips: string[] = [];
+    
+    if (error instanceof TypeError) {
+      if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Network request failed - server may be unreachable';
+        troubleshootingTips = [
+          '🔍 Check if backend server is running',
+          '🌐 Verify backend URL is correct',
+          '🔒 Check for CORS configuration issues',
+          '🌍 Test backend URL directly in browser'
+        ];
+      } else if (error.message.includes('CORS')) {
+        errorMessage = 'CORS policy blocked the request';
+        troubleshootingTips = [
+          '🔒 Update backend CORS_ORIGIN environment variable',
+          '🌐 Add your frontend domain to allowed origins',
+          `📍 Current origin: ${typeof window !== 'undefined' ? window.location.origin : 'Unknown'}`
+        ];
+      } else {
+        errorMessage = error.message;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = String(error);
+    }
+    
+    console.error(`🚨 Error details: ${errorMessage}`);
+    if (troubleshootingTips.length > 0) {
+      console.log('💡 Troubleshooting tips:');
+      troubleshootingTips.forEach(tip => console.log(`  ${tip}`));
+    }
+    
+    // Test if we can reach the backend at all
+    console.log('🧪 Running additional diagnostics...');
+    try {
+      console.log('🏓 Testing basic connectivity to backend root...');
+      const basicTest = await fetch(backendUrl, { mode: 'no-cors' });
+      console.log('✅ Basic connectivity test completed (no-cors mode)');
+    } catch (basicError) {
+      console.log('❌ Basic connectivity test failed:', basicError);
+    }
+    
+    return { 
+      success: false, 
+      error: errorMessage, 
+      responseTime: 0, 
+      status: 0,
+      troubleshootingTips 
+    };
   }
 };
 

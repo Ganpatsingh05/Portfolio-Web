@@ -2,7 +2,13 @@
 // Uses backend API base URL from env: NEXT_PUBLIC_BACKEND_URL
 // Handles auth token (stored in localStorage under 'adminToken')
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:5000';
+// Resolve API base:
+// 1. Use explicit NEXT_PUBLIC_API_URL if provided
+// 2. Otherwise use relative '' so that Next.js rewrites (/api/*) proxy to backend
+// Avoid defaulting to localhost:5000 in the browser when running against a deployed backend
+export const API_BASE = (process.env.NEXT_PUBLIC_API_URL
+  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '')
+  : '');
 
 function getToken() {
   if (typeof window === 'undefined') return undefined;
