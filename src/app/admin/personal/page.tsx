@@ -18,7 +18,19 @@ export default function PersonalInfoPage() {
   const updateField = (k: keyof PersonalInfo, v: any) => setInfo(i => ({ ...i, [k]: v }));
   const save = async () => { setSaving(true); try { const updated = await adminApi.personal.update(info); setInfo(updated as PersonalInfo); alert('Saved personal info'); } catch(e:any){ alert(e.message||'Failed to save'); } finally { setSaving(false);} };
   const uploadResume = async (file: File) => {
-    if(!file) return; try { const res = await adminApi.upload.resume(file); updateField('resume_url', res.url); } catch(e:any){ alert(e.message||'Upload failed'); } };
+    if(!file) return; 
+    try { 
+      const res = await adminApi.upload.resume(file); 
+      updateField('resume_url', res.url); 
+      // Auto-save the personal info with the new resume URL
+      const updatedInfo = { ...info, resume_url: res.url };
+      const savedInfo = await adminApi.personal.update(updatedInfo);
+      setInfo(savedInfo as PersonalInfo);
+      alert('Resume uploaded and saved successfully!');
+    } catch(e:any){ 
+      alert(e.message||'Upload failed'); 
+    } 
+  };
 
   if (loading) return <div className="p-8">Loading personal info...</div>;
   if (error) return <div className="p-8 text-red-600">{error}</div>;

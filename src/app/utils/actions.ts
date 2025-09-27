@@ -28,13 +28,14 @@ export const downloadResume = async () => {
   try {
     // First, try to get the dynamic resume URL from personal info
     const response = await fetch('/api/personal-info')
+    console.log(response.json);
     if (response.ok) {
       const result = await response.json()
       const personalInfo = result.data || result
       
       if (personalInfo.resume_url) {
         // Use dynamic resume URL from database - open directly since it's from backend
-        console.log("Url: ",personalInfo);
+        
         window.open(personalInfo.resume_url, '_blank')
         
         // Track analytics
