@@ -32,17 +32,17 @@ export default function PersonalInfoPage() {
     } 
   };
 
-  if (loading) return <div className="p-8">Loading personal info...</div>;
-  if (error) return <div className="p-8 text-red-600">{error}</div>;
+  if (loading) return <div className="p-8 text-gray-600 dark:text-gray-400">Loading personal info...</div>;
+  if (error) return <div className="p-8 text-red-600 dark:text-red-400">{error}</div>;
 
   return (
     <div className="space-y-8 max-w-4xl">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Personal Information</h1>
-        <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white px-4 py-2 rounded-md text-sm font-medium shadow">{saving ? 'Saving...' : 'Save Changes'}</button>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Personal Information</h1>
+        <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-60 text-white px-4 py-2 rounded-md text-sm font-medium shadow transition">{saving ? 'Saving...' : 'Save Changes'}</button>
       </header>
 
-      <section className="bg-white border rounded-lg shadow-sm p-6 space-y-6">
+      <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6 space-y-6">
         <div className="grid gap-5 md:grid-cols-2">
           <TextInput label="Name" value={info.name} onChange={v=>updateField('name', v)} required />
           <TextInput label="Title" value={info.title} onChange={v=>updateField('title', v)} required />
@@ -59,28 +59,28 @@ export default function PersonalInfoPage() {
         </div>
         <div>
           <Label>Bio</Label>
-          <textarea value={info.bio||''} onChange={e=>updateField('bio', e.target.value)} rows={4} className="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 px-3 py-2" />
+          <textarea value={info.bio||''} onChange={e=>updateField('bio', e.target.value)} rows={4} className="w-full rounded-md border-2 border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 font-medium resize-none transition" />
         </div>
         <div>
           <Label>Journey</Label>
-          <textarea value={info.journey||''} onChange={e=>updateField('journey', e.target.value)} rows={4} className="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 px-3 py-2" />
+          <textarea value={info.journey||''} onChange={e=>updateField('journey', e.target.value)} rows={4} className="w-full rounded-md border-2 border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 font-medium resize-none transition" />
         </div>
       </section>
 
-      <section className="bg-white border rounded-lg shadow-sm p-6 space-y-6">
-        <h2 className="text-lg font-semibold text-gray-900">Resume</h2>
+      <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6 space-y-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Resume</h2>
         <div className="space-y-4">
           {info.resume_url ? (
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <p className="text-sm text-green-700 font-medium break-all">Current: <a href={info.resume_url} target="_blank" className="underline break-all">{info.resume_url}</a></p>
+              <p className="text-sm text-green-700 dark:text-green-400 font-medium break-all">Current: <a href={info.resume_url} target="_blank" className="underline break-all hover:text-green-800 dark:hover:text-green-300 transition">{info.resume_url}</a></p>
               <div className="flex items-center gap-3">
-                <button onClick={()=>updateField('resume_url','')} className="text-sm px-3 py-1.5 rounded border border-red-200 bg-red-50 text-red-600 hover:bg-red-100">Remove</button>
+                <button onClick={()=>updateField('resume_url','')} className="text-sm px-3 py-1.5 rounded border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition">Remove</button>
               </div>
             </div>
-          ) : <p className="text-sm text-gray-500">No resume uploaded.</p>}
+          ) : <p className="text-sm text-gray-500 dark:text-gray-400">No resume uploaded.</p>}
           <div>
-            <input type="file" accept="application/pdf" onChange={e=>{ const f=e.target.files?.[0]; if(f) uploadResume(f); }} />
-            <p className="text-xs text-gray-400 mt-1">PDF only, up to 10MB.</p>
+            <input type="file" accept="application/pdf" onChange={e=>{ const f=e.target.files?.[0]; if(f) uploadResume(f); }} className="block w-full text-sm text-gray-900 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50 transition" />
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">PDF only, up to 10MB.</p>
           </div>
         </div>
       </section>
@@ -91,9 +91,9 @@ export default function PersonalInfoPage() {
 function TextInput({ label, value, onChange, type='text', required=false }: { label: string; value?: any; onChange: (v:any)=>void; type?: string; required?: boolean }) {
   return (
     <div>
-      <Label>{label}{required && <span className="text-red-500"> *</span>}</Label>
-      <input type={type} value={value||''} required={required} onChange={e=>onChange(e.target.value)} className="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 px-3 py-2" />
+      <Label>{label}{required && <span className="text-red-500 dark:text-red-400"> *</span>}</Label>
+      <input type={type} value={value||''} required={required} onChange={e=>onChange(e.target.value)} className="w-full rounded-md border-2 border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 font-medium transition" />
     </div>
   );
 }
-function Label({ children }: { children: React.ReactNode }) { return <label className="block text-sm font-medium text-gray-700 mb-1">{children}</label>; }
+function Label({ children }: { children: React.ReactNode }) { return <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{children}</label>; }

@@ -191,6 +191,7 @@ export const submitContactForm = async (formData: {
     })
 
     const result = await response.json()
+    console.log('Form submission response:', result);
 
     if (!response.ok) {
       throw new Error(result.error || 'Failed to send message')

@@ -46,14 +46,14 @@ export default function AdminHome() {
     })();
   }, [router]);
 
-  if (loading) return <div className="p-8">Loading dashboard...</div>;
-  if (error) return <div className="p-8 text-red-600">{error}</div>;
+  if (loading) return <div className="p-8 text-gray-600 dark:text-gray-400">Loading dashboard...</div>;
+  if (error) return <div className="p-8 text-red-600 dark:text-red-400">{error}</div>;
 
   return (
     <div className="space-y-10">
       <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard Overview</h1>
-        <button onClick={() => location.reload()} className="text-sm font-medium bg-white border border-gray-300 hover:bg-gray-50 px-3 py-2 rounded-md shadow-sm">Refresh</button>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Dashboard Overview</h1>
+        <button onClick={() => location.reload()} className="text-sm font-medium bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded-md shadow-sm transition">Refresh</button>
       </header>
 
       <section>
@@ -65,21 +65,21 @@ export default function AdminHome() {
         </div>
       </section>
 
-      <section className="bg-white rounded-lg shadow border">
-        <div className="p-6 border-b flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Messages</h2>
-          <a href="/admin/messages" className="text-sm text-blue-600 hover:text-blue-700">View all</a>
+      <section className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Messages</h2>
+          <a href="/admin/messages" className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition">View all</a>
         </div>
-        <ul className="divide-y">
-          {recentMessages.length === 0 && <li className="p-6 text-sm text-gray-500">No messages yet.</li>}
+        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+          {recentMessages.length === 0 && <li className="p-6 text-sm text-gray-500 dark:text-gray-400">No messages yet.</li>}
           {recentMessages.map(m => (
             <li key={m.id} className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <p className="font-medium text-gray-900">{m.name || 'Anonymous'} <span className="text-gray-400 font-normal">&lt;{m.email}&gt;</span></p>
-                <p className="text-sm text-blue-600 font-medium mt-1">Subject: {m.subject || 'No subject'}</p>
-                <p className="text-sm text-gray-600 line-clamp-2 mt-1 max-w-xl">{m.message}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{m.name || 'Anonymous'} <span className="text-gray-400 dark:text-gray-500 font-normal">&lt;{m.email}&gt;</span></p>
+                <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mt-1">Subject: {m.subject || 'No subject'}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mt-1 max-w-xl">{m.message}</p>
               </div>
-              <time className="text-xs text-gray-400 whitespace-nowrap">{new Date(m.created_at).toLocaleString()}</time>
+              <time className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{new Date(m.created_at).toLocaleString()}</time>
             </li>
           ))}
         </ul>
@@ -90,14 +90,14 @@ export default function AdminHome() {
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   const colorMap: Record<string, string> = {
-    blue: 'text-blue-600 bg-blue-50',
-    green: 'text-green-600 bg-green-50',
-    amber: 'text-amber-600 bg-amber-50',
-    purple: 'text-purple-600 bg-purple-50'
+    blue: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20',
+    green: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20',
+    amber: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20',
+    purple: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
   };
   return (
-    <div className="bg-white rounded-lg shadow p-6 border flex flex-col">
-      <span className="text-sm font-medium text-gray-500 mb-2">{label}</span>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
+      <span className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{label}</span>
       <span className={`text-4xl font-bold tracking-tight ${colorMap[color] || ''} inline-block px-2 rounded`}>{value}</span>
     </div>
   );
