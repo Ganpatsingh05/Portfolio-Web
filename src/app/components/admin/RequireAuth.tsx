@@ -24,13 +24,9 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children 
   const [status, setStatus] = useState<'checking' | 'authed' | 'redirecting'>('checking');
 
   useEffect(() => {
-    console.log('RequireAuth: Checking authentication...', { pathname });
-    
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
-    console.log('RequireAuth: Token found?', !!token);
     
     if (!token) {
-      console.log('RequireAuth: No token, redirecting to login');
       setStatus('redirecting');
       router.replace('/admin/login?next=' + encodeURIComponent(pathname || '/admin'));
       return;
@@ -38,17 +34,14 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children 
     
     const decoded = parseJwt(token);
     const now = Math.floor(Date.now() / 1000);
-    console.log('RequireAuth: Token decoded:', { decoded, now, expired: decoded?.exp ? decoded.exp < now : 'no exp' });
     
     if (!decoded || (decoded.exp && decoded.exp < now)) {
-      console.log('RequireAuth: Invalid/expired token, clearing and redirecting');
       localStorage.removeItem('adminToken');
       setStatus('redirecting');
       router.replace('/admin/login?next=' + encodeURIComponent(pathname || '/admin'));
       return;
     }
     
-    console.log('RequireAuth: Token valid, user authenticated');
     setStatus('authed');
   }, [router, pathname]);
 

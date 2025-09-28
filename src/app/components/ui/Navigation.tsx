@@ -82,7 +82,7 @@ export default function Navigation() {
                   // Fallback to text if image fails
                   e.currentTarget.style.display = 'none';
                 }}
-                onLoad={() => console.log('Logo loaded successfully')}
+                onLoad={() => {/* Image loaded */}}
               />
               {/* Glow effect on hover */}
               <motion.div

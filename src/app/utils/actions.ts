@@ -28,7 +28,6 @@ export const downloadResume = async () => {
   try {
     // First, try to get the dynamic resume URL from personal info
     const response = await fetch('/api/personal-info')
-    console.log(response.json);
     if (response.ok) {
       const result = await response.json()
       const personalInfo = result.data || result
@@ -179,8 +178,6 @@ export const submitContactForm = async (formData: {
   message: string
 }) => {
   try {
-    console.log('Submitting form:', formData)
-    
     // Submit to backend API
     const response = await fetch('/api/contact', {
       method: 'POST',
@@ -191,7 +188,6 @@ export const submitContactForm = async (formData: {
     })
 
     const result = await response.json()
-    console.log('Form submission response:', result);
 
     if (!response.ok) {
       throw new Error(result.error || 'Failed to send message')

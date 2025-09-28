@@ -46,7 +46,7 @@ export default function LottieAnimation({
           const data = await response.json()
           setAnimation(data)
         } catch (error) {
-          console.log('Animation loading failed:', error)
+          // Animation loading failed silently
           // Graceful fallback - just show a simple animated placeholder
           setAnimation(null)
         }

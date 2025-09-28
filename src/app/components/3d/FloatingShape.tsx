@@ -107,7 +107,7 @@ export default function FloatingShape({ className = "w-96 h-96" }: FloatingShape
               })
               
               canvas.addEventListener('webglcontextrestored', () => {
-                console.log('WebGL context restored in FloatingShape')
+                // WebGL context restored
                 setHasError(false)
               })
               

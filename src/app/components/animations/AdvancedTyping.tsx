@@ -4,23 +4,22 @@ import { TypeAnimation } from 'react-type-animation'
 
 interface AdvancedTypingProps {
   className?: string
+  texts?: string[]
 }
 
-export default function AdvancedTyping({ className = "text-4xl md:text-6xl font-bold" }: AdvancedTypingProps) {
+export default function AdvancedTyping({ 
+  className = "text-4xl md:text-6xl font-bold",
+  texts = ['Full Stack Developer', 'AI Enthusiast', 'Data Scientist', 'Problem Solver', 'Tech Innovator']
+}: AdvancedTypingProps) {
+  // Ensure we always have texts to display
+  const textsToUse = texts && texts.length > 0 ? texts : ['Full Stack Developer', 'AI Enthusiast', 'Data Scientist', 'Problem Solver', 'Tech Innovator'];
+  
+  // Create sequence array for TypeAnimation
+  const sequence = textsToUse.flatMap(text => [text, 2000]);
+
   return (
     <TypeAnimation
-      sequence={[
-        'Full Stack Developer',
-        2000,
-        'AI Enthusiast',
-        2000,
-        'Data Scientist',
-        2000,
-        'Problem Solver',
-        2000,
-        'Tech Innovator',
-        2000,
-      ]}
+      sequence={sequence}
       wrapper="span"
       speed={50}
       className={className}

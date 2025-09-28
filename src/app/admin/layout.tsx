@@ -141,6 +141,16 @@ function AdminSidebar() {
               Personal Info
             </a>
             
+            <a 
+              href="/admin/hero" 
+              className="group flex items-center px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-800 hover:text-blue-700 dark:hover:text-blue-400 transition-all duration-200"
+            >
+              <svg className="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 011 1v1a1 1 0 01-1 1v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a1 1 0 01-1-1V5a1 1 0 011-1h4z" />
+              </svg>
+              Hero Section
+            </a>
+            
             <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
             
             <a 

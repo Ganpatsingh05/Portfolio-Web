@@ -239,6 +239,15 @@ export const adminApi = {
     })
   },
 
+  // Hero Section
+  hero: {
+    get: () => request<any>(`/api/admin/hero`),
+    update: (data: any) => request(`/api/admin/hero`, { 
+      method: 'PUT', 
+      body: JSON.stringify(data) 
+    })
+  },
+
   // File uploads
   upload: {
     // Resume upload - now using Supabase Storage via admin endpoint

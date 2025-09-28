@@ -7,16 +7,12 @@ interface SettingsData {
   maintenance_mode: boolean;
   show_analytics: boolean;
   featured_sections: string[];
-  hero_headline?: string | null;
-  hero_subheadline?: string | null;
 }
 
 const defaultSettings: SettingsData = {
   maintenance_mode: false,
   show_analytics: true,
-  featured_sections: ['projects','skills','experiences'],
-  hero_headline: '',
-  hero_subheadline: ''
+  featured_sections: ['projects','skills','experiences']
 };
 
 export default function SettingsPage() {
@@ -37,9 +33,7 @@ export default function SettingsPage() {
           setSettings({
             maintenance_mode: data.maintenance_mode ?? false,
             show_analytics: data.show_analytics ?? true,
-            featured_sections: Array.isArray(data.featured_sections) ? data.featured_sections : ['projects','skills','experiences'],
-            hero_headline: data.hero_headline || '',
-            hero_subheadline: data.hero_subheadline || ''
+            featured_sections: Array.isArray(data.featured_sections) ? data.featured_sections : ['projects','skills','experiences']
           });
         }
       } catch (e: any) {
@@ -71,11 +65,7 @@ export default function SettingsPage() {
     setSaving(true);
     setError(null);
     try {
-      const payload: any = { ...settings };
-      // Normalize empty strings to null for optional text fields
-      if (!payload.hero_headline) payload.hero_headline = null;
-      if (!payload.hero_subheadline) payload.hero_subheadline = null;
-      await adminApi.settings.update(payload);
+      await adminApi.settings.update(settings);
       setDirty(false);
       setSuccess(true);
       // Clear success message after 3 seconds
@@ -220,59 +210,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Hero Section */}
-      <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 011 1v1a1 1 0 01-1 1v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a1 1 0 01-1-1V5a1 1 0 011-1h4z" />
-            </svg>
-            Hero Section Content
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Customize the main headline and description on your homepage</p>
-        </div>
-        <div className="p-6 space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
-              Main Headline
-            </label>
-            <input
-              type="text"
-              value={settings.hero_headline || ''}
-              onChange={e => update({ hero_headline: e.target.value })}
-              maxLength={200}
-              placeholder="Enter your main headline (optional)"
-              className="w-full rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 px-4 py-3 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 transition"
-            />
-            <div className="flex justify-between items-center mt-2">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Up to 200 characters</p>
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                {(settings.hero_headline || '').length}/200
-              </span>
-            </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
-              Subheadline
-            </label>
-            <textarea
-              value={settings.hero_subheadline || ''}
-              onChange={e => update({ hero_subheadline: e.target.value })}
-              maxLength={400}
-              rows={4}
-              placeholder="Enter supporting text or description (optional)"
-              className="w-full rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 px-4 py-3 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 transition resize-none"
-            />
-            <div className="flex justify-between items-center mt-2">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Up to 400 characters</p>
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                {(settings.hero_subheadline || '').length}/400
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Featured Sections */}
       <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
