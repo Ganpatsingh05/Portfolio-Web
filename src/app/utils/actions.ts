@@ -1,4 +1,4 @@
-// Utility functions for button actions
+import { api } from '@/lib/api'
 
 export const scrollToSection = (sectionId: string) => {
   const element = document.getElementById(sectionId.replace('#', ''))
@@ -10,7 +10,7 @@ export const scrollToSection = (sectionId: string) => {
   }
 }
 
-export const openEmail = (email: string = 'ganpatsingh.dev@gmail.com', subject?: string, body?: string) => {
+export const openEmail = (email: string = 'ask.gsinghr@gmail.com', subject?: string, body?: string) => {
   let mailtoLink = `mailto:${email}`
   const params = new URLSearchParams()
   
@@ -26,84 +26,34 @@ export const openEmail = (email: string = 'ganpatsingh.dev@gmail.com', subject?:
 
 export const downloadResume = async () => {
   try {
-    // First, try to get the dynamic resume URL from personal info
-    const response = await fetch('/api/personal-info')
-    if (response.ok) {
-      const result = await response.json()
-      const personalInfo = result.data || result
+    // Get resume URL from personal info
+    const personalInfo = await api.getPersonalInfo()
+    
+    if (personalInfo.resume_url) {
+      window.open(personalInfo.resume_url, '_blank')
       
-      if (personalInfo.resume_url) {
-        // Use dynamic resume URL from database - open directly since it's from backend
-        
-        window.open(personalInfo.resume_url, '_blank')
-        
-        // Track analytics
-        try {
-          await fetch('/api/analytics', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              event_type: 'resume_download',
-              event_data: { source: 'dynamic', filename: `${personalInfo.name || 'Ganpat_Singh'}_Resume.pdf` },
-            }),
-          })
-        } catch (analyticsError) {
-          console.error('Analytics tracking failed:', analyticsError)
-        }
-        
-        return
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching dynamic resume:', error)
-    // If CORS error, try direct backend URL as fallback
-    if (error instanceof Error && error.message.includes('CORS')) {
-      window.open('https://portfolio-web-gsr.onrender.com/uploads/resumes/resume_1756821195010.pdf', '_blank')
+      // Track analytics
+      api.trackEvent('resume_download', { 
+        source: 'dynamic', 
+        filename: `${personalInfo.name}_Resume.pdf` 
+      })
       return
     }
+  } catch (error) {
+    console.error('Error fetching resume:', error)
   }
   
-  // Fallback to static resume
-  const resumeUrl = '/resume/Ganpat_Singh_Resume.pdf'
+  // Fallback: Try static resume from public folder
+  const link = document.createElement('a')
+  link.href = '/resume/Ganpat_Singh_Resume.pdf'
+  link.download = 'Ganpat_Singh_Resume.pdf'
+  link.target = '_blank'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
   
-  // Check if static resume exists, if not show message
-  try {
-    const checkResponse = await fetch(resumeUrl, { method: 'HEAD' })
-    if (checkResponse.ok) {
-      const link = document.createElement('a')
-      link.href = resumeUrl
-      link.download = 'Ganpat_Singh_Resume.pdf'
-      link.target = '_blank'
-      
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    } else {
-      throw new Error('Static resume not found')
-    }
-  } catch (staticError) {
-    // Final fallback: direct link to backend resume
-    alert('Opening resume in new tab...')
-    window.open('https://portfolio-web-gsr.onrender.com/uploads/resumes/resume_1756821195010.pdf', '_blank')
-  }
-  
-  // Track analytics for fallback
-  try {
-    await fetch('/api/analytics', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        event_type: 'resume_download',
-        event_data: { source: 'fallback', filename: 'Ganpat_Singh_Resume.pdf' },
-      }),
-    })
-  } catch (analyticsError) {
-    console.error('Analytics tracking failed:', analyticsError)
-  }
+  // Track fallback
+  api.trackEvent('resume_download', { source: 'static' })
 }
 
 export const openProjectDemo = (demoUrl: string) => {
@@ -178,34 +128,13 @@ export const submitContactForm = async (formData: {
   message: string
 }) => {
   try {
-    // Submit to backend API
-    const response = await fetch('/api/contact', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    })
-
-    const result = await response.json()
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Failed to send message')
-    }
-
+    // Submit to backend API using centralized api client
+    const result = await api.submitContact(formData)
+    
     // Track analytics
-    await fetch('/api/analytics', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        event_type: 'contact_form',
-        event_data: { subject: formData.subject },
-      }),
-    })
+    api.trackEvent('contact_form', { subject: formData.subject })
 
-    return { success: true, message: 'Message sent successfully!' }
+    return { success: true, message: result.message || 'Message sent successfully!' }
   } catch (error) {
     console.error('Form submission error:', error)
     return { 

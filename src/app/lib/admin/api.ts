@@ -1,16 +1,9 @@
 // Centralized admin API client
-// Uses backend API base URL from env: NEXT_PUBLIC_BACKEND_URL
-// Handles auth token (stored in localStorage under 'adminToken')
+// Uses config from /src/lib/config.ts for API base URL
 
-// Resolve API base:
-// 1. Use explicit NEXT_PUBLIC_API_URL if provided
-// 2. Otherwise use the backend URL from NEXT_PUBLIC_BACKEND_URL
-// 3. Fallback to relative '' for Next.js rewrites
-export const API_BASE = (
-  process.env.NEXT_PUBLIC_API_URL || 
-  process.env.NEXT_PUBLIC_BACKEND_URL || 
-  "https://portfolio-web-gsr.onrender.com"
-);
+import { config } from '@/lib/config';
+
+export const API_BASE = config.api.baseUrl;
 
 function getToken() {
   if (typeof window === 'undefined') return undefined;
