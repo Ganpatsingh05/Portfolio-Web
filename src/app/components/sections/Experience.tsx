@@ -2,8 +2,8 @@
 
 import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
-import { useState, useEffect } from 'react'
 import { FaRocket, FaCode, FaStar, FaBriefcase, FaGraduationCap } from 'react-icons/fa'
+import { useExperiences } from '@/lib/hooks'
 
 // Dynamic import for Lottie animation
 const LottieAnimation = dynamic(() => import('../animations/LottieAnimation'), { ssr: false })
@@ -13,7 +13,7 @@ interface ExperienceItem {
   title: string
   company: string
   period: string
-  description: string[]
+  description?: string | string[]
   type: 'experience' | 'education'
   skills?: string[]
   location?: string
@@ -27,74 +27,9 @@ interface ExperienceItem {
 }
 
 export default function Experience() {
-  const [experiences, setExperiences] = useState<ExperienceItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: experiences = [], isLoading } = useExperiences()
 
-  // Fetch experiences from API
-  useEffect(() => {
-    const fetchExperiences = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/experiences')
-        if (!response.ok) {
-          throw new Error('Failed to fetch experiences')
-        }
-        const result = await response.json()
-        // Extract the data array from the response wrapper
-        const data = result.data || result || []
-        setExperiences(data)
-      } catch (err) {
-        console.error('Error fetching experiences:', err)
-        setError('Failed to load experiences')
-        // Fallback to static data
-        setExperiences([
-          {
-            title: "Frontend Developer Intern",
-            company: "Tech Innovators Pvt Ltd",
-            period: "Jun 2024 - Aug 2024",
-            description: [
-              "Developed responsive web applications using React and TypeScript",
-              "Collaborated with design team to implement pixel-perfect UI components",
-              "Optimized application performance resulting in 30% faster load times"
-            ],
-            skills: ["React", "TypeScript", "CSS", "JavaScript", "Git"],
-            type: "experience"
-          },
-          {
-            title: "Bachelor of Computer Science",
-            company: "Lovely Professional University, Jalandhar",
-            period: "2023 - 2027",
-            description: [
-              "Relevant Coursework: Data Structures, Algorithms, Machine Learning, Database Systems",
-              "Current CGPA: 8.5/10",
-              "Member of Computer Science Club and AI Research Group"
-            ],
-            skills: ["Python", "Java", "Machine Learning", "Data Structures", "Algorithms"],
-            type: "education"
-          },
-          {
-            title: "Freelance Web Developer",
-            company: "Self-Employed",
-            period: "Jan 2023 - Present",
-            description: [
-              "Built custom websites for small businesses using modern web technologies",
-              "Managed full project lifecycle from requirements gathering to deployment",
-              "Delivered 8+ projects with 100% client satisfaction rate"
-            ],
-            skills: ["Next.js", "Node.js", "MongoDB", "Tailwind CSS", "AWS"],
-            type: "experience"
-          }
-        ])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchExperiences()
-  }, [])
-
-  if (loading) {
+  if (isLoading) {
     return (
       <section className="py-20 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden" id="experience">
         <div className="max-w-6xl mx-auto px-4">
@@ -234,7 +169,7 @@ export default function Experience() {
           {/* Timeline Line */}
           <div className="absolute left-4 md:left-1/2 transform md:-translate-x-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-orange-300 via-amber-300 to-yellow-300 dark:from-orange-600 dark:via-amber-600 dark:to-yellow-600 rounded-full shadow-lg"></div>
 
-          {experiences.map((item, index) => (
+          {experiences.map((item: ExperienceItem, index: number) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 50 }}
@@ -292,7 +227,7 @@ export default function Experience() {
                   
                   {/* Description */}
                   <ul className="space-y-3 mb-4">
-                    {item.description.map((desc, descIndex) => (
+                    {(Array.isArray(item.description) ? item.description : item.description ? [item.description] : []).map((desc, descIndex) => (
                       <motion.li 
                         key={descIndex} 
                         className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed flex items-start gap-2"
@@ -311,7 +246,7 @@ export default function Experience() {
                   {item.skills && (
                     <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
                       <div className="flex flex-wrap gap-2">
-                        {item.skills.map((skill, skillIndex) => (
+                        {item.skills.map((skill: string, skillIndex: number) => (
                           <motion.span
                             key={skill}
                             initial={{ opacity: 0, scale: 0.8 }}

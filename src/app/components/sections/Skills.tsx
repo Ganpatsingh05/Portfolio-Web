@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { 
   FaReact, 
   FaNodeJs, 
@@ -13,12 +13,12 @@ import {
   FaCode,
   FaBrain,
   FaTools,
+  FaFlask,
   FaRocket,
   FaStar,
   FaLightbulb,
   FaUsers,
-  FaCogs,
-  FaFlask
+  FaCogs
 } from 'react-icons/fa'
 import { 
   SiTypescript, 
@@ -29,6 +29,7 @@ import {
   SiNextdotjs,
   SiJavascript
 } from 'react-icons/si'
+import { useSkills } from '@/lib/hooks'
 
 interface Skill {
   id?: string
@@ -117,76 +118,34 @@ const getCategoryLabel = (cat?: string) => {
 export default function Skills() {
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null)
-  const [skills, setSkills] = useState<Skill[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: rawSkills = [], isLoading } = useSkills()
   
-  // Fetch skills from API
-  useEffect(() => {
-    const fetchSkills = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/skills')
-        if (!response.ok) {
-          throw new Error('Failed to fetch skills')
-        }
-        const result = await response.json()
-        // Extract the data array from the response wrapper
-        const data = result.data || result || []
-        // Sort by category (asc), then level desc, then name asc
-        const sorted = (data as Skill[]).slice().sort((a, b) => {
-          const ca = (a.category || '').toLowerCase()
-          const cb = (b.category || '').toLowerCase()
-          if (ca < cb) return -1
-          if (ca > cb) return 1
-          if (a.level !== b.level) return b.level - a.level
-          return (a.name || '').localeCompare(b.name || '')
-        })
-        setSkills(sorted)
-      } catch (err) {
-        console.error('Error fetching skills:', err)
-        setError('Failed to load skills')
-        // Fallback to static data
-        setSkills([
-          { name: 'React/Next.js', level: 90, category: 'frontend', icon_name: 'FaReact' },
-          { name: 'TypeScript', level: 85, category: 'frontend', icon_name: 'SiTypescript' },
-          { name: 'TailwindCSS', level: 88, category: 'frontend', icon_name: 'SiTailwindcss' },
-          { name: 'JavaScript', level: 92, category: 'frontend', icon_name: 'SiJavascript' },
-          { name: 'Node.js', level: 80, category: 'backend', icon_name: 'FaNodeJs' },
-          { name: 'Python', level: 85, category: 'backend', icon_name: 'FaPython' },
-          { name: 'PostgreSQL', level: 75, category: 'backend', icon_name: 'SiPostgresql' },
-          { name: 'MongoDB', level: 78, category: 'backend', icon_name: 'SiMongodb' },
-          { name: 'Git/GitHub', level: 90, category: 'tools', icon_name: 'FaGitAlt' },
-          { name: 'Docker', level: 70, category: 'tools', icon_name: 'FaDocker' },
-          { name: 'AWS', level: 65, category: 'tools', icon_name: 'FaAws' },
-          { name: 'Machine Learning', level: 75, category: 'ai-ml', icon_name: 'FaBrain' },
-          { name: 'TensorFlow', level: 70, category: 'ai-ml', icon_name: 'SiTensorflow' },
-          { name: 'Data Analysis', level: 80, category: 'ai-ml', icon_name: 'FaDatabase' }
-        ])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchSkills()
-  }, [])
+  // Sort skills by category, level, name
+  const skills = rawSkills.slice().sort((a: Skill, b: Skill) => {
+    const ca = (a.category || '').toLowerCase()
+    const cb = (b.category || '').toLowerCase()
+    if (ca < cb) return -1
+    if (ca > cb) return 1
+    if (a.level !== b.level) return b.level - a.level
+    return (a.name || '').localeCompare(b.name || '')
+  })
   
   const categories = ['all', 'frontend', 'backend', 'tools', 'ai-ml', 'other', 'custom']
   
   const filteredSkills = activeCategory === 'all' 
     ? skills 
-    : skills.filter(skill => skill.category === activeCategory)
+    : skills.filter((skill: Skill) => skill.category === activeCategory)
 
   const skillsStats = {
     total: skills.length,
-    frontend: skills.filter(s => s.category === 'frontend').length,
-    backend: skills.filter(s => s.category === 'backend').length,
-    tools: skills.filter(s => s.category === 'tools').length,
-    'ai-ml': skills.filter(s => s.category === 'ai-ml').length,
-    avgLevel: skills.length > 0 ? Math.round(skills.reduce((sum, skill) => sum + skill.level, 0) / skills.length) : 0
+    frontend: skills.filter((s: Skill) => s.category === 'frontend').length,
+    backend: skills.filter((s: Skill) => s.category === 'backend').length,
+    tools: skills.filter((s: Skill) => s.category === 'tools').length,
+    'ai-ml': skills.filter((s: Skill) => s.category === 'ai-ml').length,
+    avgLevel: skills.length > 0 ? Math.round(skills.reduce((sum: number, skill: Skill) => sum + skill.level, 0) / skills.length) : 0
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <section className="py-20 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800" id="skills">
         <div className="max-w-7xl mx-auto px-4">

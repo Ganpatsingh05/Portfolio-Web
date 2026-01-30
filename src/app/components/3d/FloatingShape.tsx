@@ -4,7 +4,6 @@ import { useRef, useState, useEffect, Suspense } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Sphere, MeshDistortMaterial } from '@react-three/drei'
 import * as THREE from 'three'
-import { shouldUse3D } from '@/app/utils/webgl'
 
 function AnimatedSphere() {
   const meshRef = useRef<THREE.Mesh>(null!)
@@ -20,7 +19,6 @@ function AnimatedSphere() {
     <Sphere ref={meshRef} args={[1, 64, 128]} scale={2.5}>
       <MeshDistortMaterial
         color="#3b82f6"
-        attach="material"
         distort={0.3}
         speed={1.5}
         roughness={0.2}
@@ -30,14 +28,14 @@ function AnimatedSphere() {
   )
 }
 
-function FallbackComponent({ className }: { className?: string }) {
+function CSSFallback({ className }: { className?: string }) {
   return (
     <div className={className}>
-      <div className="w-full h-full relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full opacity-20 animate-pulse" />
-        <div className="absolute inset-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full opacity-30 animate-bounce" 
+      <div className="w-full h-full relative flex items-center justify-center">
+        <div className="absolute w-64 h-64 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full opacity-20 animate-pulse" />
+        <div className="absolute w-48 h-48 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full opacity-30 animate-bounce" 
              style={{ animationDuration: '3s' }} />
-        <div className="absolute inset-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-full opacity-40 animate-pulse" 
+        <div className="absolute w-32 h-32 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-full opacity-40 animate-pulse" 
              style={{ animationDelay: '1s' }} />
       </div>
     </div>
@@ -49,93 +47,40 @@ interface FloatingShapeProps {
 }
 
 export default function FloatingShape({ className = "w-96 h-96" }: FloatingShapeProps) {
-  const [use3D, setUse3D] = useState(false)
-  const [hasError, setHasError] = useState(false)
-  const [isInitialized, setIsInitialized] = useState(false)
+  const [shouldRender3D, setShouldRender3D] = useState(false)
 
   useEffect(() => {
-    // Delay WebGL detection to ensure proper initialization
-    const timer = setTimeout(() => {
-      try {
-        const should3D = shouldUse3D()
-        setUse3D(should3D)
-        setIsInitialized(true)
-      } catch (error) {
-        console.warn('WebGL detection failed:', error)
-        setUse3D(false)
-        setHasError(true)
-        setIsInitialized(true)
-      }
-    }, 100)
-
-    return () => clearTimeout(timer)
+    // Check for WebGL support
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    
+    // Only render 3D on desktop with WebGL
+    const hasWebGL = !!gl
+    const isDesktop = window.innerWidth >= 1024
+    
+    setShouldRender3D(hasWebGL && isDesktop)
   }, [])
 
-  // Show loading state during initialization
-  if (!isInitialized) {
-    return <FallbackComponent className={className} />
+  if (!shouldRender3D) {
+    return <CSSFallback className={className} />
   }
 
-  // Fallback to CSS animation if WebGL not supported, on mobile, or error occurred
-  if (!use3D || hasError) {
-    return <FallbackComponent className={className} />
-  }
-
-  // Only try to render Canvas if we're confident it will work
-  try {
-    return (
-      <div className={className}>
+  return (
+    <div className={className}>
+      <Suspense fallback={<CSSFallback className={className} />}>
         <Canvas
-          dpr={Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 1.5)}
-          performance={{ min: 0.5 }}
+          dpr={[1, 1.5]}
           gl={{
             antialias: false,
             alpha: true,
-            premultipliedAlpha: false,
-            preserveDrawingBuffer: false,
-            powerPreference: "default",
-            failIfMajorPerformanceCaveat: true
-          }}
-          onCreated={({ gl }) => {
-            try {
-              // Handle WebGL context loss
-              const canvas = gl.domElement
-              canvas.addEventListener('webglcontextlost', (event) => {
-                event.preventDefault()
-                console.warn('WebGL context lost in FloatingShape')
-                setHasError(true)
-              })
-              
-              canvas.addEventListener('webglcontextrestored', () => {
-                // WebGL context restored
-                setHasError(false)
-              })
-              
-              if (gl.debug) {
-                gl.debug.checkShaderErrors = false
-              }
-            } catch (error) {
-              console.warn('Error setting up WebGL context:', error)
-              setHasError(true)
-            }
-          }}
-          onError={(error) => {
-            console.warn('Three.js error in FloatingShape:', error)
-            setHasError(true)
+            powerPreference: "default"
           }}
         >
-          <Suspense fallback={null}>
-            <ambientLight intensity={0.3} />
-            <directionalLight position={[10, 10, 5]} intensity={0.8} />
-            <AnimatedSphere />
-          </Suspense>
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 10, 5]} intensity={1} />
+          <AnimatedSphere />
         </Canvas>
-      </div>
-    )
-  } catch (error) {
-    // Silently catch any Canvas creation errors and return fallback
-    console.warn('Canvas creation failed, using fallback:', error)
-    setHasError(true)
-    return <FallbackComponent className={className} />
-  }
+      </Suspense>
+    </div>
+  )
 }

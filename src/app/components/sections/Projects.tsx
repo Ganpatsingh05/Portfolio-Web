@@ -2,11 +2,12 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { useState, useMemo, useEffect } from 'react'
-import { FaGithub, FaExternalLinkAlt, FaEye, FaStar, FaCode, FaRocket } from 'react-icons/fa'
+import { useState, useMemo } from 'react'
+import { FaGithub, FaExternalLinkAlt, FaRocket, FaStar, FaEye } from 'react-icons/fa'
 import { BiGitBranch } from 'react-icons/bi'
 import LottieAnimation from '../animations/LottieAnimation'
-import { openProjectDemo, openProjectCode, scrollToSection, projectUrls } from '../../utils/actions'
+import { openProjectDemo, openProjectCode } from '../../utils/actions'
+import { useProjects } from '@/lib/hooks'
 
 interface Project {
   id: string
@@ -18,105 +19,24 @@ interface Project {
   demo_url?: string
   status: 'completed' | 'in-progress' | 'planning'
   featured?: boolean
-  sort_order?: number
-  start_date?: string
-  end_date?: string
-  created_at?: string
-  updated_at?: string
+  image_url?: string
 }
-
-// Fallback static projects (in case API fails)
-const fallbackProjects: Project[] = [
-  {
-    id: '1',
-    title: "E-Commerce Platform",
-    description: "Full-stack e-commerce solution with modern UI/UX and secure payment integration.",
-    technologies: ["React", "Node.js", "MongoDB", "Stripe", "Socket.io"],
-    category: "Web Dev",
-    github_url: projectUrls.ecommerce.github,
-    demo_url: projectUrls.ecommerce.demo,
-    status: "completed",
-    featured: true
-  },
-  {
-    id: '2',
-    title: "AI Chatbot",
-    description: "Intelligent chatbot powered by natural language processing and machine learning.",
-    technologies: ["Python", "TensorFlow", "Flask", "NLP", "OpenAI"],
-    category: "AI",
-    github_url: projectUrls.aiChatbot.github,
-    demo_url: projectUrls.aiChatbot.demo,
-    status: "completed",
-    featured: true
-  },
-  {
-    id: '3',
-    title: "Data Analytics Dashboard",
-    description: "Interactive dashboard for visualizing complex datasets with real-time updates.",
-    technologies: ["Python", "Pandas", "Plotly", "Streamlit", "PostgreSQL"],
-    category: "Data Science",
-    github_url: projectUrls.dataAnalytics.github,
-    demo_url: projectUrls.dataAnalytics.demo,
-    status: "in-progress"
-  }
-]
 
 export default function Projects() {
   const [activeCategory, setActiveCategory] = useState<string>('All')
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
-  const [projects, setProjects] = useState<Project[]>(fallbackProjects)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: projects = [], isLoading } = useProjects()
   
   const categories = ['All', 'Web Dev', 'Data Science', 'AI', 'ML']
 
-  // Choose a Lottie animation based on category; fall back to a rotating set for variety
   const getProjectAnimation = (category: string, index: number) => {
     const key = (category || '').toLowerCase()
     if (key.includes('web')) return 'web'
     if (key.includes('data')) return 'data'
     if (key === 'ai' || key === 'ml' || key.includes('ai')) return 'ai'
-    // rotate through a few for unknown categories
     const pool = ['rocket', 'mobile', 'coding', 'web'] as const
     return pool[index % pool.length]
   }
-
-  // Fetch projects from API
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/projects')
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch projects')
-        }
-        
-        const result = await response.json()
-        
-        // Handle both { data: [] } format and raw array format
-        let projectsData = [];
-        if (result.data && Array.isArray(result.data)) {
-          projectsData = result.data;
-        } else if (Array.isArray(result)) {
-          projectsData = result;
-        } else {
-          console.warn('Invalid projects data format, using fallback');
-          projectsData = fallbackProjects;
-        }
-        
-        setProjects(projectsData);
-      } catch (error) {
-        console.error('Error fetching projects:', error)
-        setError('Failed to load projects')
-        setProjects(fallbackProjects) // Use fallback data
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProjects()
-  }, [])
 
   // Fixed filtering logic with proper memoization
   const filteredProjects = useMemo(() => {
@@ -124,7 +44,7 @@ export default function Projects() {
       return projects
     }
     
-    const filtered = projects.filter(project => {
+    const filtered = projects.filter((project: Project) => {
       return project.category === activeCategory
     })
     
@@ -209,7 +129,7 @@ export default function Projects() {
 
         {/* Projects Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {loading ? (
+          {isLoading ? (
             // Loading skeleton
             Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl animate-pulse">

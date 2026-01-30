@@ -5,11 +5,11 @@ import dynamic from 'next/dynamic'
 import { useState, useEffect } from 'react'
 import { FaRocket, FaTools, FaRobot, FaCloud, FaDownload, FaComments, FaClock } from 'react-icons/fa'
 import { BsLightning, BsEmojiSmile } from 'react-icons/bs'
-import { SiReact, SiNodedotjs } from 'react-icons/si'
 import { BiTargetLock } from 'react-icons/bi'
+import { SiReact, SiNodedotjs } from 'react-icons/si'
 import { downloadResume, scrollToSection } from '../../utils/actions'
+import { api, fallbackData } from '@/lib/api'
 
-// Dynamic import for Lottie animation
 const LottieAnimation = dynamic(() => import('../animations/LottieAnimation'), { ssr: false })
 
 interface PersonalInfo {
@@ -27,44 +27,20 @@ interface PersonalInfo {
   degree?: string
   university?: string
   education_period?: string
-  created_at?: string
-  updated_at?: string
 }
 
 export default function About() {
-  const [personalInfo, setPersonalInfo] = useState<PersonalInfo | null>(null)
+  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>(fallbackData.personalInfo)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  // Fetch personal info from API
   useEffect(() => {
     const fetchPersonalInfo = async () => {
       try {
-        setLoading(true)
-        const response = await fetch('/api/personal-info')
-        if (!response.ok) {
-          throw new Error('Failed to fetch personal info')
-        }
-        const result = await response.json()
-        setPersonalInfo(result.data || result)
+        const data = await api.getPersonalInfo()
+        setPersonalInfo(data)
       } catch (err) {
         console.error('Error fetching personal info:', err)
-        setError('Failed to load personal information')
-        // Fallback to static data
-        setPersonalInfo({
-          name: 'Ganpat Singh',
-          title: 'Full Stack Developer & AI Enthusiast',
-          email: 'ask.gsinghr@gmail.com',
-          location: 'Jodhpur, Rajasthan (India)',
-          github_url: 'https://github.com/Ganpatsingh05',
-          linkedin_url: 'https://linkedin.com/in/ganpatsingh05',
-          leetcode_url: 'https://leetcode.com/ganpatsingh05',
-          bio: "I'm a passionate developer who loves creating innovative solutions and bringing ideas to life through code. With a strong foundation in computer science and a passion for emerging technologies, I've been developing web applications and exploring AI/ML for the past few years.",
-          journey: "With a strong foundation in computer science and a passion for emerging technologies, I've been developing web applications and exploring AI/ML for the past few years. I believe in writing clean, efficient code and creating user experiences that make a difference.",
-          degree: "Bachelor's in Computer Science",
-          university: "Lovely Professional University, Jalandhar (Punjab)",
-          education_period: "2023-2027"
-        })
+        // Keep fallback data
       } finally {
         setLoading(false)
       }
@@ -104,23 +80,8 @@ export default function About() {
   if (loading) {
     return (
       <section className="py-20 bg-white dark:bg-gray-900 relative overflow-hidden" id="about">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading information...</p>
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  if (!personalInfo) {
-    return (
-      <section className="py-20 bg-white dark:bg-gray-900 relative overflow-hidden" id="about">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center">
-            <p className="text-gray-600 dark:text-gray-400">Failed to load personal information</p>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto"></div>
         </div>
       </section>
     )
