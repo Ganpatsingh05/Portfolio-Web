@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   FaEnvelope, 
   FaMapMarkerAlt, 
@@ -19,8 +19,19 @@ import {
 } from 'react-icons/fa'
 import { SiLeetcode } from 'react-icons/si'
 import { submitContactForm, downloadResume, openSocialLink, openEmail } from '../../utils/actions'
+import { api, fallbackData } from '@/lib/api'
+
+interface PersonalInfo {
+  email?: string
+  location?: string
+  github_url?: string
+  linkedin_url?: string
+  leetcode_url?: string
+  resume_url?: string
+}
 
 export default function Contact() {
+  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({})
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -28,6 +39,18 @@ export default function Contact() {
     message: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    const fetchPersonalInfo = async () => {
+      try {
+        const data = await api.getPersonalInfo()
+        setPersonalInfo(data)
+      } catch (err) {
+        console.error('Error fetching personal info:', err)
+      }
+    }
+    fetchPersonalInfo()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,67 +94,67 @@ export default function Contact() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-12 lg:mb-16"
         >
           <motion.div
-            initial={{ scale: 0.8 }}
+            initial={{ scale: 0.9 }}
             whileInView={{ scale: 1 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4 }}
             viewport={{ once: true }}
-            className="inline-block mb-6"
+            className="inline-block mb-4 sm:mb-6"
           >
-            <FaRocket className="text-6xl text-orange-500 mx-auto" />
+            <FaRocket className="text-4xl sm:text-5xl lg:text-6xl text-orange-500 mx-auto" />
           </motion.div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent mb-4 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent mb-3 sm:mb-4 lg:mb-6">
             Let's Work Together
           </h2>
-          <p className="text-base sm:text-lg md:text-xl text-gray-800 dark:text-white max-w-3xl mx-auto leading-relaxed px-1">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-800 dark:text-white max-w-3xl mx-auto leading-relaxed px-2">
             Ready to bring your ideas to life? Let's collaborate and create something amazing together!
           </p>
           
-          {/* Fun Stats */}
+          {/* Fun Stats - Scrollable on mobile */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
             viewport={{ once: true }}
-            className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 mt-6 sm:mt-8"
+            className="flex justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8 mt-5 sm:mt-6 lg:mt-8 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap scrollbar-hide"
           >
-            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-300">
-              <FaCoffee className="text-xl" />
-              <span className="font-semibold">100+ Cups of Coffee</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 text-orange-600 dark:text-orange-300 whitespace-nowrap flex-shrink-0">
+              <FaCoffee className="text-lg sm:text-xl" />
+              <span className="font-semibold text-xs sm:text-sm md:text-base">100+ Cups of Coffee</span>
             </div>
-            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-300">
-              <FaCode className="text-xl" />
-              <span className="font-semibold">50+ Projects Completed</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 text-orange-600 dark:text-orange-300 whitespace-nowrap flex-shrink-0">
+              <FaCode className="text-lg sm:text-xl" />
+              <span className="font-semibold text-xs sm:text-sm md:text-base">50+ Projects Completed</span>
             </div>
-            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-300">
-              <FaHeart className="text-xl" />
-              <span className="font-semibold">Made with Passion</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 text-orange-600 dark:text-orange-300 whitespace-nowrap flex-shrink-0">
+              <FaHeart className="text-lg sm:text-xl" />
+              <span className="font-semibold text-xs sm:text-sm md:text-base">Made with Passion</span>
             </div>
           </motion.div>
         </motion.div>
 
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 xl:gap-16">
           {/* Contact Form */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.5 }}
             viewport={{ once: true }}
-            className="rounded-2xl p-5 sm:p-6 md:p-8 border backdrop-blur-sm bg-white/90 dark:bg-white/5 border-orange-200 dark:border-orange-500/20"
+            className="rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 border backdrop-blur-sm bg-white/90 dark:bg-white/5 border-orange-200 dark:border-orange-500/20"
           >
-            <div className="text-center mb-8">
-              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Send a Message</h3>
-              <p className="text-gray-800 dark:text-white text-sm sm:text-base">I'll get back to you within 24 hours!</p>
+            <div className="text-center mb-5 sm:mb-6 lg:mb-8">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">Send a Message</h3>
+              <p className="text-gray-800 dark:text-white text-xs sm:text-sm md:text-base">I'll get back to you within 24 hours!</p>
             </div>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 lg:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                 <div className="group">
-                  <label htmlFor="name" className="flex items-center gap-2 text-sm font-medium mb-2 text-orange-700 dark:text-orange-300">
+                  <label htmlFor="name" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-orange-700 dark:text-orange-300">
                     <FaUser className="text-orange-600 dark:text-orange-500" />
                     Name
                   </label>
@@ -142,12 +165,12 @@ export default function Contact() {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 sm:px-4 py-3 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 group-hover:border-orange-400 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
                     placeholder="Enter your name"
                   />
                 </div>
                 <div className="group">
-                  <label htmlFor="email" className="flex items-center gap-2 text-sm font-medium mb-2 text-orange-700 dark:text-orange-300">
+                  <label htmlFor="email" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-orange-700 dark:text-orange-300">
                     <FaEnvelope className="text-orange-600 dark:text-orange-500" />
                     Email
                   </label>
@@ -158,14 +181,14 @@ export default function Contact() {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 sm:px-4 py-3 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 group-hover:border-orange-400 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
                     placeholder="Enter your email address"
                   />
                 </div>
               </div>
               
               <div className="group">
-                <label htmlFor="subject" className="flex items-center gap-2 text-sm font-medium mb-2 text-orange-700 dark:text-orange-300">
+                <label htmlFor="subject" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-orange-700 dark:text-orange-300">
                   <FaTag className="text-orange-600 dark:text-orange-500" />
                   Subject
                 </label>
@@ -176,13 +199,13 @@ export default function Contact() {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 sm:px-4 py-3 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 group-hover:border-orange-400 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
                   placeholder="What's your project about?"
                 />
               </div>
               
               <div className="group">
-                <label htmlFor="message" className="flex items-center gap-2 text-sm font-medium mb-2 text-orange-700 dark:text-orange-300">
+                <label htmlFor="message" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-orange-700 dark:text-orange-300">
                   <FaComment className="text-orange-600 dark:text-orange-500" />
                   Message
                 </label>
@@ -192,8 +215,8 @@ export default function Contact() {
                   value={formData.message}
                   onChange={handleChange}
                   required
-                  rows={6}
-                  className="w-full px-3 sm:px-4 py-3 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none transition-all duration-300 group-hover:border-orange-400 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  rows={5}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none transition-all duration-200 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
                   placeholder="Tell me about your project idea..."
                 />
               </div>
@@ -201,22 +224,22 @@ export default function Contact() {
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
-                whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 sm:py-4 rounded-lg font-semibold hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25"
+                className="w-full text-white py-2.5 sm:py-3 lg:py-4 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 shadow-lg active:shadow-md touch-manipulation text-sm sm:text-base"
+                style={{ backgroundColor: 'var(--accent-color)' }}
               >
                 {isSubmitting ? (
                   <>
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                      className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full"
                     />
                     Sending...
                   </>
                 ) : (
                   <>
-                    <FaPaperPlane />
+                    <FaPaperPlane className="text-sm sm:text-base" />
                     Send Message
                   </>
                 )}
@@ -226,32 +249,31 @@ export default function Contact() {
 
           {/* Contact Info */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
             viewport={{ once: true }}
-            className="space-y-6 sm:space-y-8"
+            className="space-y-4 sm:space-y-6 lg:space-y-8"
           >
-            <div className="rounded-2xl p-5 sm:p-6 md:p-8 border backdrop-blur-sm bg-white/90 dark:bg-white/5 border-orange-200 dark:border-orange-500/20">
-              <h3 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-gray-900 drop-shadow-sm">Get In Touch</h3>
-              <p className="text-gray-800 dark:text-gray-800 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base drop-shadow-sm">
+            <div className="rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 border backdrop-blur-sm bg-white/90 dark:bg-white/5 border-orange-200 dark:border-orange-500/20">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-3 sm:mb-4 lg:mb-6 text-gray-900 dark:text-gray-900 drop-shadow-sm">Get In Touch</h3>
+              <p className="text-gray-800 dark:text-gray-800 mb-4 sm:mb-6 lg:mb-8 leading-relaxed text-xs sm:text-sm lg:text-base drop-shadow-sm">
                 I'm always excited to work on new projects and collaborate with amazing people. 
-                Whether you have a specific project in mind or just want to explore possibilities, 
-                let's connect and make something incredible together!
+                Let's connect and make something incredible together!
               </p>
 
-              <div className="space-y-4 sm:space-y-6">
+              <div className="space-y-3 sm:space-y-4 lg:space-y-6">
                 <motion.div 
-                  whileHover={{ x: 5 }}
-                  className="flex items-center space-x-4 group cursor-pointer"
-                  onClick={() => openEmail('ganpatsingh.tech@gmail.com')}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center space-x-3 sm:space-x-4 group cursor-pointer touch-manipulation p-2 -m-2 rounded-lg active:bg-orange-50 dark:active:bg-orange-900/20"
+                  onClick={() => openEmail(personalInfo.email || 'ganpatsingh.tech@gmail.com')}
                 >
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center group-hover:shadow-lg group-hover:shadow-orange-500/25 transition-all duration-300">
-                    <FaEnvelope className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+                    <FaEnvelope className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-orange-700 dark:text-orange-800 group-hover:text-orange-600 dark:group-hover:text-orange-700 transition-colors text-sm sm:text-base drop-shadow-sm">Email</h4>
-                    <p className="text-gray-800 dark:text-gray-900 group-hover:text-gray-900 dark:group-hover:text-black transition-colors text-sm sm:text-base drop-shadow-sm">ganpatsingh.tech@gmail.com</p>
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-orange-700 dark:text-orange-800 text-xs sm:text-sm lg:text-base drop-shadow-sm">Email</h4>
+                    <p className="text-gray-800 dark:text-gray-900 text-xs sm:text-sm lg:text-base drop-shadow-sm truncate">{personalInfo.email || 'ganpatsingh.tech@gmail.com'}</p>
                   </div>
                 </motion.div>
 
@@ -264,7 +286,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-orange-700 dark:text-orange-800 group-hover:text-orange-600 dark:group-hover:text-orange-700 transition-colors text-sm sm:text-base drop-shadow-sm">Location</h4>
-                    <p className="text-gray-800 dark:text-gray-900 group-hover:text-gray-900 dark:group-hover:text-black transition-colors text-sm sm:text-base drop-shadow-sm">Available Worldwide (Remote)</p>
+                    <p className="text-gray-800 dark:text-gray-900 group-hover:text-gray-900 dark:group-hover:text-black transition-colors text-sm sm:text-base drop-shadow-sm">{personalInfo.location || 'Available Worldwide (Remote)'}</p>
                   </div>
                 </motion.div>
               </div>
@@ -273,30 +295,36 @@ export default function Contact() {
               <div className="mt-8">
                 <h4 className="font-semibold mb-4 sm:mb-6 text-orange-700 dark:text-orange-800 text-base sm:text-lg drop-shadow-sm">Connect With Me</h4>
                 <div className="flex space-x-3 sm:space-x-4">
-                  <motion.button
-                    onClick={() => openSocialLink("https://leetcode.com/u/Ganpat_singh/")}
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center hover:shadow-lg hover:shadow-orange-500/25 transition-all duration-300 text-white"
-                  >
-                    <SiLeetcode className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </motion.button>
-                  <motion.button
-                    onClick={() => openSocialLink("https://www.linkedin.com/in/ganpat-singh-aabb4a285/")}
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center hover:shadow-lg hover:shadow-orange-500/25 transition-all duration-300 text-white"
-                  >
-                    <FaLinkedin className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </motion.button>
-                  <motion.button
-                    onClick={() => openSocialLink("https://github.com/Ganpatsingh05")}
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center hover:shadow-lg hover:shadow-orange-500/25 transition-all duration-300 text-white"
-                  >
-                    <FaGithub className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </motion.button>
+                  {personalInfo.leetcode_url && (
+                    <motion.button
+                      onClick={() => openSocialLink(personalInfo.leetcode_url!)}
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center hover:shadow-lg hover:shadow-orange-500/25 transition-all duration-300 text-white"
+                    >
+                      <SiLeetcode className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </motion.button>
+                  )}
+                  {personalInfo.linkedin_url && (
+                    <motion.button
+                      onClick={() => openSocialLink(personalInfo.linkedin_url!)}
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center hover:shadow-lg hover:shadow-orange-500/25 transition-all duration-300 text-white"
+                    >
+                      <FaLinkedin className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </motion.button>
+                  )}
+                  {personalInfo.github_url && (
+                    <motion.button
+                      onClick={() => openSocialLink(personalInfo.github_url!)}
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center hover:shadow-lg hover:shadow-orange-500/25 transition-all duration-300 text-white"
+                    >
+                      <FaGithub className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </motion.button>
+                  )}
                 </div>
               </div>
 

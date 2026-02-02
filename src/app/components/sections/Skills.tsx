@@ -147,11 +147,16 @@ export default function Skills() {
 
   if (isLoading) {
     return (
-      <section className="py-20 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800" id="skills">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading skills...</p>
+      <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800" id="skills">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-48 mx-auto"></div>
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-64 mx-auto"></div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -159,81 +164,80 @@ export default function Skills() {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800" id="skills">
-      <div className="max-w-7xl mx-auto px-4">
+    <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800" id="skills">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-12 lg:mb-16"
         >
           <motion.div
-            initial={{ scale: 0.8 }}
+            initial={{ scale: 0.9 }}
             whileInView={{ scale: 1 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4 }}
             viewport={{ once: true }}
-            className="inline-block mb-4"
+            className="inline-block mb-3 sm:mb-4"
           >
-            <FaRocket className="text-5xl text-orange-500 mx-auto" />
+            <FaRocket className="text-4xl sm:text-5xl text-orange-500 mx-auto" />
           </motion.div>
-          <h2 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-3 sm:mb-4">
             Skills & Expertise
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto px-4">
             Technical skills I've mastered through continuous learning and real-world application.
           </p>
         </motion.div>
 
         {/* Stats Section */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
           viewport={{ once: true }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-10 sm:mb-12 lg:mb-16"
         >
-          <div className="text-center bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-orange-200 dark:border-orange-800">
-            <FaStar className="text-3xl text-orange-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{skillsStats.total}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Total Skills</div>
+          <div className="text-center bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-4 sm:p-5 lg:p-6 shadow-lg border border-orange-200 dark:border-orange-800">
+            <FaStar className="text-2xl sm:text-3xl text-orange-500 mx-auto mb-1 sm:mb-2" />
+            <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{skillsStats.total}</div>
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Skills</div>
           </div>
-          <div className="text-center bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-orange-200 dark:border-orange-800">
-            <FaCode className="text-3xl text-orange-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{skillsStats.frontend}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Frontend</div>
+          <div className="text-center bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-4 sm:p-5 lg:p-6 shadow-lg border border-orange-200 dark:border-orange-800">
+            <FaCode className="text-2xl sm:text-3xl text-orange-500 mx-auto mb-1 sm:mb-2" />
+            <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{skillsStats.frontend}</div>
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Frontend</div>
           </div>
-          <div className="text-center bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-orange-200 dark:border-orange-800">
-            <FaDatabase className="text-3xl text-orange-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{skillsStats.backend}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Backend</div>
+          <div className="text-center bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-4 sm:p-5 lg:p-6 shadow-lg border border-orange-200 dark:border-orange-800">
+            <FaDatabase className="text-2xl sm:text-3xl text-orange-500 mx-auto mb-1 sm:mb-2" />
+            <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{skillsStats.backend}</div>
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Backend</div>
           </div>
-          <div className="text-center bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-orange-200 dark:border-orange-800">
-            <FaRocket className="text-3xl text-orange-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{skillsStats.avgLevel}%</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Avg Level</div>
+          <div className="text-center bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-4 sm:p-5 lg:p-6 shadow-lg border border-orange-200 dark:border-orange-800">
+            <FaRocket className="text-2xl sm:text-3xl text-orange-500 mx-auto mb-1 sm:mb-2" />
+            <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{skillsStats.avgLevel}%</div>
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Avg Level</div>
           </div>
         </motion.div>
 
-        {/* Category Filter */}
+        {/* Category Filter - Scrollable on mobile */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
           viewport={{ once: true }}
-          className="flex flex-wrap justify-center gap-4 mb-12"
+          className="flex gap-2 sm:gap-3 lg:gap-4 mb-8 sm:mb-10 lg:mb-12 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center scrollbar-hide"
         >
           {categories.map((category) => (
             <motion.button
               key={category}
               onClick={() => setActiveCategory(category)}
-              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`px-6 py-3 rounded-full font-medium transition-all duration-300 flex items-center gap-2 ${
+              className={`px-4 sm:px-5 lg:px-6 py-2 sm:py-2.5 lg:py-3 rounded-full font-medium transition-all duration-200 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 text-sm sm:text-base touch-manipulation ${
                 activeCategory === category
                   ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25'
-                  : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-gray-600 shadow-md border border-orange-200 dark:border-gray-600'
+                  : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 active:bg-orange-50 dark:active:bg-gray-600 shadow-md border border-orange-200 dark:border-gray-600'
               }`}
             >
               {category !== 'all' && categoryIcons[category as keyof typeof categoryIcons]}
@@ -243,68 +247,48 @@ export default function Skills() {
         </motion.div>
 
         {/* Skills Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {filteredSkills.map((skill, index) => (
             <motion.div
-              key={skill.name}
-              initial={{ opacity: 0, y: 20 }}
+              key={skill.id}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
               viewport={{ once: true }}
-              whileHover={{ y: -5 }}
               onHoverStart={() => setHoveredSkill(skill.name)}
               onHoverEnd={() => setHoveredSkill(null)}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-orange-200 dark:border-gray-700 group"
+              className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-4 sm:p-5 lg:p-6 shadow-lg transition-all duration-200 border border-orange-200 dark:border-gray-700 group"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <motion.div
-                    animate={{ 
-                      rotate: hoveredSkill === skill.name ? 360 : 0,
-                      scale: hoveredSkill === skill.name ? 1.1 : 1
-                    }}
-                    transition={{ duration: 0.3 }}
-                    className="text-2xl"
-                  >
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="text-xl sm:text-2xl">
                     {skill.icon_name && iconMap[skill.icon_name] || <FaCode className="text-gray-600" />}
-                  </motion.div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                  </div>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                     {skill.name}
                   </h3>
                 </div>
                 <div className="text-right">
-                  <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">{skill.level}%</span>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">proficiency</div>
+                  <span className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400">{skill.level}%</span>
+                  <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">proficiency</div>
                 </div>
               </div>
               
               {/* Progress Bar */}
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden mb-4">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-3 overflow-hidden mb-3 sm:mb-4">
                 <motion.div
                   initial={{ width: 0 }}
                   whileInView={{ width: `${skill.level}%` }}
-                  transition={{ duration: 1.5, delay: index * 0.1, ease: "easeOut" }}
+                  transition={{ duration: 1, delay: index * 0.05, ease: "easeOut" }}
                   viewport={{ once: true }}
-                  className={`h-full bg-gradient-to-r ${getCategoryGradient(skill.category)} rounded-full relative overflow-hidden`}
-                >
-                  <motion.div
-                    animate={{ x: ['0%', '100%', '0%'] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                  />
-                </motion.div>
+                  className={`h-full bg-gradient-to-r ${getCategoryGradient(skill.category)} rounded-full`}
+                />
               </div>
               
               <div className="flex justify-between items-center">
-                <span className={`text-xs px-3 py-1 rounded-full bg-gradient-to-r ${getCategoryGradient(skill.category)} text-white font-medium`}>
+                <span className={`text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-gradient-to-r ${getCategoryGradient(skill.category)} text-white font-medium`}>
                   {getCategoryLabel(skill.category)}
                 </span>
-                <motion.div
-                  animate={{ opacity: hoveredSkill === skill.name ? 1 : 0 }}
-                  className="text-orange-500"
-                >
-                  <FaStar className="text-sm" />
-                </motion.div>
               </div>
             </motion.div>
           ))}
@@ -314,13 +298,13 @@ export default function Skills() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
           viewport={{ once: true }}
-          className="mt-20"
+          className="mt-12 sm:mt-16 lg:mt-20"
         >
-          <div className="text-center mb-10">
-            <FaLightbulb className="text-4xl text-orange-500 mx-auto mb-4" />
-            <h3 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-4">
+          <div className="text-center mb-6 sm:mb-8 lg:mb-10">
+            <FaLightbulb className="text-3xl sm:text-4xl text-orange-500 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-3 sm:mb-4">
               Additional Expertise
             </h3>
             <p className="text-gray-600 dark:text-gray-400">

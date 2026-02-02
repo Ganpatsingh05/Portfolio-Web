@@ -21,10 +21,14 @@ function parseJwt(token: string): any | null {
 export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [status, setStatus] = useState<'checking' | 'authed' | 'redirecting'>('checking');
+  // Start with null to indicate "not yet mounted" - this prevents hydration mismatch
+  const [status, setStatus] = useState<'mounting' | 'checking' | 'authed' | 'redirecting'>('mounting');
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
+    // Set to checking once mounted
+    setStatus('checking');
+    
+    const token = localStorage.getItem('adminToken');
     
     if (!token) {
       setStatus('redirecting');
@@ -45,6 +49,11 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children 
     setStatus('authed');
   }, [router, pathname]);
 
+  // During SSR and initial hydration, render nothing to prevent mismatch
+  if (status === 'mounting') {
+    return null;
+  }
+  
   if (status === 'checking') {
     return <div className="p-8 text-sm text-gray-500">Authenticating...</div>;
   }

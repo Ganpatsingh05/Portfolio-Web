@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Fira_Code } from "next/font/google";
 import { ThemeProvider } from "@/app/components/ui/ThemeProvider";
 import { ThemeScript } from "@/app/components/ui/ThemeScript";
 import { QueryProvider } from "@/lib/QueryProvider";
 import "./globals.css";
 
-const geistSans = Geist({
+const inter = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
+  fallback: ["system-ui", "arial", "sans-serif"],
 });
 
-const geistMono = Geist_Mono({
+const firaCode = Fira_Code({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+  fallback: ["Consolas", "Monaco", "monospace"],
 });
 
 export const metadata: Metadata = {
@@ -70,6 +74,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <ThemeScript />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/gslogo.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/gslogo.png" />
@@ -77,7 +86,7 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/favicon.ico" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-gray-900`}
+        className={`${inter.variable} ${firaCode.variable} antialiased bg-white dark:bg-gray-900`}
       >
         <QueryProvider>
           <ThemeProvider

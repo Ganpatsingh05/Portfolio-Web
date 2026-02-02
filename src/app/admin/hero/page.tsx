@@ -1,33 +1,31 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { adminApi } from '@/app/lib/admin/api';
+import { adminApi, ensureAuthedClient } from '@/app/lib/admin/api';
 import { useRouter } from 'next/navigation';
+import { useToast } from '../components/Toast';
+import { useConfirm } from '../components/ConfirmModal';
 
 interface HeroData {
+  greeting: string;
   name: string;
   typing_texts: string[];
   quote?: string | null;
   social_links: {
     github?: string;
     linkedin?: string;
-    twitter?: string;
     email?: string;
-    instagram?: string;
-    website?: string;
   };
 }
 
 const defaultHero: HeroData = {
+  greeting: 'Hello, I\'m',
   name: '',
   typing_texts: [],
   quote: '',
   social_links: {
     github: '',
     linkedin: '',
-    twitter: '',
-    email: '',
-    instagram: '',
-    website: ''
+    email: ''
   }
 };
 
@@ -40,29 +38,38 @@ export default function HeroPage() {
   const [success, setSuccess] = useState(false);
   const [newTypingText, setNewTypingText] = useState('');
   const router = useRouter();
+  const toast = useToast();
+  const { confirm } = useConfirm();
 
   useEffect(() => {
+    if (!ensureAuthedClient()) {
+      router.replace('/admin/login');
+      return;
+    }
+    
     let mounted = true;
     (async () => {
       try {
         const data = await adminApi.hero.get();
-        if (mounted) {
+        if (mounted && data) {
           setHero({
+            greeting: data.greeting || 'Hello, I\'m',
             name: data.name || '',
             typing_texts: Array.isArray(data.typing_texts) ? data.typing_texts : [],
             quote: data.quote || '',
             social_links: {
               github: data.social_links?.github || '',
               linkedin: data.social_links?.linkedin || '',
-              twitter: data.social_links?.twitter || '',
-              email: data.social_links?.email || '',
-              instagram: data.social_links?.instagram || '',
-              website: data.social_links?.website || ''
+              email: data.social_links?.email || ''
             }
           });
         }
       } catch (e: any) {
         if (mounted) {
+          if (e?.status === 401) {
+            router.replace('/admin/login');
+            return;
+          }
           setError(e?.message || 'Failed to load hero data');
         }
       } finally {
@@ -70,7 +77,7 @@ export default function HeroPage() {
       }
     })();
     return () => { mounted = false; };
-  }, []);
+  }, [router]);
 
   const update = (patch: Partial<HeroData>) => {
     setHero(prev => ({ ...prev, ...patch }));
@@ -117,28 +124,55 @@ export default function HeroPage() {
     setError(null);
     try {
       const payload = {
-        ...hero,
+        greeting: hero.greeting || null,
+        name: hero.name,
+        typing_texts: hero.typing_texts,
         quote: hero.quote || null,
         social_links: Object.fromEntries(
-          Object.entries(hero.social_links).filter(([_, value]) => value.trim() !== '')
+          Object.entries(hero.social_links).filter(([_, value]) => value && value.trim() !== '')
         )
       };
-      await adminApi.hero.update(payload);
+      const result = await adminApi.hero.update(payload);
+      // Update state with returned data
+      if (result) {
+        setHero({
+          greeting: result.greeting || 'Hello, I\'m',
+          name: result.name || '',
+          typing_texts: Array.isArray(result.typing_texts) ? result.typing_texts : [],
+          quote: result.quote || '',
+          social_links: {
+            github: result.social_links?.github || '',
+            linkedin: result.social_links?.linkedin || '',
+            email: result.social_links?.email || ''
+          }
+        });
+      }
       setDirty(false);
       setSuccess(true);
+      toast.success('Saved!', 'Hero section updated successfully');
       setTimeout(() => setSuccess(false), 3000);
     } catch (e: any) {
+      toast.error('Save Failed', e?.message || 'Failed to save hero section');
       setError(e?.message || 'Save failed');
     } finally {
       setSaving(false);
     }
   };
 
-  const resetToDefaults = () => {
-    if (window.confirm('Are you sure you want to reset all hero content to defaults?')) {
+  const resetToDefaults = async () => {
+    const confirmed = await confirm({
+      title: 'Reset to Defaults?',
+      message: 'Are you sure you want to reset all hero content to defaults? This action cannot be undone.',
+      type: 'warning',
+      confirmText: 'Reset',
+      cancelText: 'Cancel'
+    });
+    
+    if (confirmed) {
       setHero(defaultHero);
       setDirty(true);
       setSuccess(false);
+      toast.info('Reset Complete', 'Hero content has been reset to defaults');
     }
   };
 
@@ -156,34 +190,25 @@ export default function HeroPage() {
   return (
     <div className="p-6 space-y-8 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Hero Section</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Customize your homepage hero section content and social links</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {dirty && (
-            <span className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-3 py-1 rounded-full">
-              Unsaved changes
-            </span>
-          )}
-          {success && (
-            <span className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
-              Hero content saved successfully!
-            </span>
-          )}
-          <button
-            onClick={resetToDefaults}
-            className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
-          >
-            Reset to Defaults
-          </button>
-          <button
-            onClick={save}
-            disabled={!dirty || saving}
-            className="px-6 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition font-medium"
-          >
-            {saving ? (
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Hero Section</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Customize your homepage hero section content and social links</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={resetToDefaults}
+              className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
+            >
+              Reset to Defaults
+            </button>
+            <button
+              onClick={save}
+              disabled={!dirty || saving}
+              className="px-6 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition font-medium"
+            >
+              {saving ? (
               <span className="flex items-center gap-2">
                 <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
                 Saving...
@@ -193,6 +218,22 @@ export default function HeroPage() {
             )}
           </button>
         </div>
+        </div>
+        {/* Status badges below header */}
+        {(dirty || success) && (
+          <div className="flex items-center gap-3">
+            {dirty && (
+              <span className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-3 py-1 rounded-full">
+                Unsaved changes
+              </span>
+            )}
+            {success && (
+              <span className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
+                Hero content saved successfully!
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {error && (
@@ -215,9 +256,29 @@ export default function HeroPage() {
             </svg>
             Basic Information
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Your name and personal quote displayed on the homepage</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Your greeting, name and personal quote displayed on the homepage</p>
         </div>
         <div className="p-6 space-y-6">
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
+              Greeting Text
+            </label>
+            <input
+              type="text"
+              value={hero.greeting}
+              onChange={e => update({ greeting: e.target.value })}
+              maxLength={50}
+              placeholder="e.g., Hello, I'm or Hi, I'm or Welcome, I'm"
+              className="w-full rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 px-4 py-3 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 transition"
+            />
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Text shown before your name (e.g., "Hello, I'm")</p>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                {hero.greeting.length}/50
+              </span>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
               Your Name <span className="text-red-500">*</span>
@@ -353,27 +414,57 @@ export default function HeroPage() {
             <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
-            Social Media Links
+            Hero Social Links
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Add your social media profiles and contact information</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Social links displayed in the hero section. For other sections, update Personal Info.</p>
         </div>
         <div className="p-6">
           <div className="grid gap-6 md:grid-cols-2">
-            {Object.entries(hero.social_links).map(([platform, url]) => (
-              <div key={platform}>
-                <label className="flex text-sm font-medium mb-2 text-gray-900 dark:text-white capitalize items-center gap-2">
-                  {getSocialIcon(platform)}
-                  {platform === 'website' ? 'Personal Website' : platform}
-                </label>
-                <input
-                  type="url"
-                  value={url}
-                  onChange={e => updateSocialLink(platform as keyof HeroData['social_links'], e.target.value)}
-                  placeholder={getSocialPlaceholder(platform)}
-                  className="w-full rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 px-4 py-3 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 transition"
-                />
-              </div>
-            ))}
+            <div>
+              <label className="flex text-sm font-medium mb-2 text-gray-900 dark:text-white items-center gap-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                GitHub URL
+              </label>
+              <input
+                type="url"
+                value={hero.social_links.github || ''}
+                onChange={e => updateSocialLink('github', e.target.value)}
+                placeholder="https://github.com/yourusername"
+                className="w-full rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 px-4 py-3 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 transition"
+              />
+            </div>
+            <div>
+              <label className="flex text-sm font-medium mb-2 text-gray-900 dark:text-white items-center gap-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                LinkedIn URL
+              </label>
+              <input
+                type="url"
+                value={hero.social_links.linkedin || ''}
+                onChange={e => updateSocialLink('linkedin', e.target.value)}
+                placeholder="https://linkedin.com/in/yourprofile"
+                className="w-full rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 px-4 py-3 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 transition"
+              />
+            </div>
+            <div>
+              <label className="flex text-sm font-medium mb-2 text-gray-900 dark:text-white items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Email
+              </label>
+              <input
+                type="email"
+                value={hero.social_links.email || ''}
+                onChange={e => updateSocialLink('email', e.target.value)}
+                placeholder="your.email@example.com"
+                className="w-full rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 px-4 py-3 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 transition"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -403,63 +494,4 @@ export default function HeroPage() {
       </div>
     </div>
   );
-}
-
-function getSocialIcon(platform: string) {
-  switch (platform) {
-    case 'github':
-      return (
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-        </svg>
-      );
-    case 'linkedin':
-      return (
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-        </svg>
-      );
-    case 'twitter':
-      return (
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-        </svg>
-      );
-    case 'instagram':
-      return (
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-        </svg>
-      );
-    case 'email':
-      return (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      );
-    case 'website':
-      return (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-        </svg>
-      );
-    default:
-      return (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-        </svg>
-      );
-  }
-}
-
-function getSocialPlaceholder(platform: string) {
-  switch (platform) {
-    case 'github': return 'https://github.com/yourusername';
-    case 'linkedin': return 'https://linkedin.com/in/yourprofile';
-    case 'twitter': return 'https://twitter.com/yourusername';
-    case 'instagram': return 'https://instagram.com/yourusername';
-    case 'email': return 'your.email@example.com';
-    case 'website': return 'https://yourwebsite.com';
-    default: return `Enter your ${platform} URL`;
-  }
 }

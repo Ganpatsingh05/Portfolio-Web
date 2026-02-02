@@ -211,6 +211,9 @@ export const adminApi = {
     list: () => request<any[]>(`/api/admin/messages`),
     markRead: (id: string) => request(`/api/admin/messages/${id}/read`, { 
       method: 'PUT' 
+    }),
+    delete: (id: string) => request(`/api/admin/messages/${id}`, { 
+      method: 'DELETE' 
     })
   },
 
@@ -235,7 +238,7 @@ export const adminApi = {
   // Hero Section
   hero: {
     get: () => request<any>(`/api/admin/hero`),
-    update: (data: any) => request(`/api/admin/hero`, { 
+    update: (data: any) => request<any>(`/api/admin/hero`, { 
       method: 'PUT', 
       body: JSON.stringify(data) 
     })
@@ -243,11 +246,11 @@ export const adminApi = {
 
   // File uploads
   upload: {
-    // Resume upload - now using Supabase Storage via admin endpoint
+    // Resume upload - using Supabase Storage endpoint
     resume: async (file: File) => {
       const formData = new FormData();
       formData.append('resume', file);
-      const result = await uploadRequest<any>(`/api/admin/upload/resume`, formData);
+      const result = await uploadRequest<any>(`/api/uploads/resume`, formData);
       return result;
     },
     

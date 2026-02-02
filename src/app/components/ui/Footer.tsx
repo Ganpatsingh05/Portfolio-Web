@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 import { 
   FaTwitter, 
   FaLinkedin, 
@@ -14,46 +15,61 @@ import {
 } from 'react-icons/fa'
 import { SiLeetcode } from 'react-icons/si'
 import { openSocialLink, scrollToSection, openEmail } from '../../utils/actions'
+import { api } from '@/lib/api'
+
+interface PersonalInfo {
+  name?: string
+  title?: string
+  email?: string
+  location?: string
+  bio?: string
+  footer_bio?: string
+  github_url?: string
+  linkedin_url?: string
+  leetcode_url?: string
+}
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
+  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({})
+
+  useEffect(() => {
+    const fetchPersonalInfo = async () => {
+      try {
+        const data = await api.getPersonalInfo()
+        setPersonalInfo(data)
+      } catch (err) {
+        console.error('Error fetching personal info:', err)
+      }
+    }
+    fetchPersonalInfo()
+  }, [])
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
-    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-16 relative overflow-hidden">
-      {/* Background Elements */}
+    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-10 sm:py-12 lg:py-16 relative overflow-hidden">
+      {/* Background Elements - Simplified for mobile */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 left-1/4 w-32 sm:w-48 lg:w-64 h-32 sm:h-48 lg:h-64 bg-orange-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-48 sm:w-64 lg:w-96 h-48 sm:h-64 lg:h-96 bg-amber-500/10 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 relative">
-        <div className="grid md:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Brand & Description */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2">
             <motion.div 
-              className="mb-6 flex items-center gap-4 group cursor-pointer"
-              whileHover={{ scale: 1.02 }}
+              className="mb-4 sm:mb-6 flex items-center gap-3 sm:gap-4 group"
               whileTap={{ scale: 0.98 }}
             >
-              <motion.div
-                className="relative"
-                whileHover={{ 
-                  rotate: [0, -10, 10, -10, 0],
-                  scale: 1.1
-                }}
-                transition={{ 
-                  duration: 0.6,
-                  ease: "easeInOut"
-                }}
-              >
+              <motion.div className="relative">
                 <img 
                   src="/gslogo.png" 
                   alt="GS Logo"
-                  className="h-16 w-auto transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(251,146,60,0.6)]"
+                  className="h-12 sm:h-14 lg:h-16 w-auto"
                 />
                 {/* Animated glow effect */}
                 <motion.div
@@ -69,63 +85,60 @@ export default function Footer() {
               </motion.div>
               <div>
                 <motion.h3 
-                  className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent"
+                  className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent"
                   whileHover={{ 
                     x: 5,
                   }}
                   transition={{ duration: 0.2 }}
                 >
-                  Ganpat Singh
+                  {personalInfo.name || 'Ganpat Singh'}
                 </motion.h3>
-                <p className="text-orange-300 font-medium">Full Stack Developer</p>
+                <p className="text-orange-300 font-medium">{personalInfo.title || 'Full Stack Developer'}</p>
               </div>
             </motion.div>
             
-            <p className="text-gray-300 mb-6 leading-relaxed max-w-md">
-              Passionate about creating innovative web solutions and exploring the latest 
-              in AI and modern web technologies. Always excited to work on challenging projects 
-              that make a difference.
+            <p className="text-sm sm:text-base text-gray-300 mb-4 sm:mb-6 leading-relaxed max-w-md">
+              {personalInfo.footer_bio || 'Passionate about creating innovative web solutions and exploring the latest in AI and modern web technologies.'}
             </p>
             
             {/* Social Links */}
-            <div className="flex space-x-4 mb-6">
+            <div className="flex space-x-3 sm:space-x-4 mb-4 sm:mb-6">
               {[
-                { icon: SiLeetcode, href: "https://leetcode.com/u/Ganpat_singh/", color: "hover:text-orange-400" },
-                { icon: FaLinkedin, href: "https://www.linkedin.com/in/ganpat-singh-aabb4a285/", color: "hover:text-blue-600" },
-                { icon: FaGithub, href: "https://github.com/Ganpatsingh05", color: "hover:text-gray-400" }
-              ].map((social, index) => (
+                { icon: SiLeetcode, href: personalInfo.leetcode_url, color: "active:text-orange-400" },
+                { icon: FaLinkedin, href: personalInfo.linkedin_url, color: "active:text-blue-600" },
+                { icon: FaGithub, href: personalInfo.github_url, color: "active:text-gray-400" }
+              ].filter(social => social.href).map((social, index) => (
                 <motion.button
                   key={index}
-                  onClick={() => openSocialLink(social.href)}
-                  whileHover={{ scale: 1.2, rotate: 5 }}
+                  onClick={() => openSocialLink(social.href!)}
                   whileTap={{ scale: 0.9 }}
-                  className={`w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center ${social.color} transition-all duration-300 border border-orange-500/20 hover:border-orange-400/40 hover:shadow-lg hover:shadow-orange-500/25`}
+                  className={`w-10 h-10 sm:w-12 sm:h-12 bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl flex items-center justify-center ${social.color} transition-all duration-200 border border-orange-500/20 touch-manipulation`}
                 >
-                  <social.icon className="w-5 h-5" />
+                  <social.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </motion.button>
               ))}
             </div>
 
             {/* Contact Info */}
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               <button 
-                onClick={() => openEmail('ganpatsingh.tech@gmail.com')}
-                className="flex items-center gap-3 text-gray-300 hover:text-orange-300 transition-colors cursor-pointer"
+                onClick={() => openEmail(personalInfo.email || 'ganpatsingh.tech@gmail.com')}
+                className="flex items-center gap-2 sm:gap-3 text-sm sm:text-base text-gray-300 active:text-orange-300 transition-colors cursor-pointer touch-manipulation"
               >
-                <FaEnvelope className="text-orange-500" />
-                <span>ganpatsingh.tech@gmail.com</span>
+                <FaEnvelope className="text-orange-500 flex-shrink-0" />
+                <span className="truncate">{personalInfo.email || 'ganpatsingh.tech@gmail.com'}</span>
               </button>
-              <div className="flex items-center gap-3 text-gray-300 hover:text-orange-300 transition-colors">
-                <FaMapMarkerAlt className="text-orange-500" />
-                <span>Available Worldwide (Remote)</span>
+              <div className="flex items-center gap-2 sm:gap-3 text-sm sm:text-base text-gray-300">
+                <FaMapMarkerAlt className="text-orange-500 flex-shrink-0" />
+                <span>{personalInfo.location || 'Available Worldwide'}</span>
               </div>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-xl font-bold mb-6 text-orange-300">Quick Links</h4>
-            <ul className="space-y-3">
+            <h4 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-orange-300">Quick Links</h4>
+            <ul className="space-y-2 sm:space-y-3">
               {[
                 { name: "About", href: "#about" },
                 { name: "Projects", href: "#projects" },
@@ -136,10 +149,10 @@ export default function Footer() {
                 <li key={link.name}>
                   <motion.button 
                     onClick={() => scrollToSection(link.href)}
-                    whileHover={{ x: 5 }}
-                    className="text-gray-300 hover:text-orange-300 transition-all duration-300 flex items-center gap-2 group"
+                    whileTap={{ x: 3 }}
+                    className="text-sm sm:text-base text-gray-300 active:text-orange-300 transition-all duration-200 flex items-center gap-2 group touch-manipulation py-1"
                   >
-                    <div className="w-1 h-1 bg-orange-500 rounded-full group-hover:w-2 transition-all duration-300"></div>
+                    <div className="w-1 h-1 bg-orange-500 rounded-full"></div>
                     {link.name}
                   </motion.button>
                 </li>
@@ -149,8 +162,8 @@ export default function Footer() {
 
           {/* Services & Tech */}
           <div>
-            <h4 className="text-xl font-bold mb-6 text-orange-300">Services</h4>
-            <ul className="space-y-3">
+            <h4 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-orange-300">Services</h4>
+            <ul className="space-y-2 sm:space-y-3">
               {[
                 "Web Development",
                 "UI/UX Design", 
@@ -159,13 +172,10 @@ export default function Footer() {
                 "DevOps Solutions"
               ].map((service) => (
                 <li key={service}>
-                  <motion.div 
-                    whileHover={{ x: 5 }}
-                    className="text-gray-300 hover:text-orange-300 transition-all duration-300 flex items-center gap-2 group"
-                  >
-                    <div className="w-1 h-1 bg-orange-500 rounded-full group-hover:w-2 transition-all duration-300"></div>
+                  <div className="text-sm sm:text-base text-gray-300 flex items-center gap-2 group py-1">
+                    <div className="w-1 h-1 bg-orange-500 rounded-full"></div>
                     {service}
-                  </motion.div>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -173,45 +183,45 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-700/50 my-8"></div>
+        <div className="border-t border-gray-700/50 my-6 sm:my-8"></div>
 
         {/* Bottom Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2 text-gray-300">
-            <span>© {currentYear} Ganpat Singh. Made with</span>
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            >
-              <FaHeart className="text-red-500" />
-            </motion.div>
-            <span>using</span>
-            <FaCode className="text-orange-500" />
-            <span>Next.js & TailwindCSS</span>
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2 text-gray-300 text-xs sm:text-sm">
+            <span>© {currentYear} {personalInfo.name || 'Ganpat Singh'}.</span>
+            <span className="flex items-center gap-1.5">
+              Made with
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              >
+                <FaHeart className="text-red-500" />
+              </motion.div>
+            </span>
+            <span className="hidden sm:inline">using Next.js & TailwindCSS</span>
           </div>
           
           {/* Back to Top */}
           <motion.button
             onClick={scrollToTop}
-            whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className="bg-gradient-to-r from-orange-500 to-amber-500 text-white p-3 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 transition-all duration-300 flex items-center gap-2 group"
+            className="bg-gradient-to-r from-orange-500 to-amber-500 text-white p-2.5 sm:p-3 rounded-lg sm:rounded-xl active:shadow-md transition-all duration-200 flex items-center gap-2 touch-manipulation"
           >
-            <FaArrowUp className="group-hover:-translate-y-1 transition-transform duration-300" />
-            <span className="hidden md:inline">Back to Top</span>
+            <FaArrowUp className="text-sm sm:text-base" />
+            <span className="hidden sm:inline text-sm">Back to Top</span>
           </motion.button>
         </div>
 
         {/* Tech Stack Badge */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mt-8"
+          className="text-center mt-6 sm:mt-8"
         >
-          <div className="inline-flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-full px-6 py-3 border border-orange-500/20">
-            <FaRocket className="text-orange-500" />
-            <span className="text-gray-300 text-sm">Built for the future of web development</span>
+          <div className="inline-flex items-center gap-2 sm:gap-3 bg-white/5 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 sm:py-3 border border-orange-500/20">
+            <FaRocket className="text-orange-500 text-sm sm:text-base" />
+            <span className="text-gray-300 text-xs sm:text-sm">Built for the future of web</span>
           </div>
         </motion.div>
       </div>

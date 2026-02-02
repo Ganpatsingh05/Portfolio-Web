@@ -76,6 +76,7 @@ export const api = {
   // Hero section
   async getHero() {
     return fetchApi<{
+      greeting?: string;
       name: string;
       typing_texts: string[];
       quote?: string;
@@ -181,6 +182,23 @@ export const api = {
       }
     }
   },
+
+  // Site settings
+  async getSettings() {
+    return fetchApi<{
+      maintenance_mode: boolean;
+      maintenance_message: string;
+      visible_sections: string[];
+      show_footer: boolean;
+      show_navigation: boolean;
+      enable_animations: boolean;
+      contact_form_enabled: boolean;
+      show_social_links: boolean;
+      show_resume_button: boolean;
+      default_theme: 'light' | 'dark' | 'system';
+      accent_color: string;
+    }>(apiEndpoints.settings);
+  },
 };
 
 /**
@@ -188,6 +206,7 @@ export const api = {
  */
 export const fallbackData = {
   hero: {
+    greeting: "Hello, I'm",
     name: 'Ganpat Singh',
     typing_texts: ['Full Stack Developer', 'AI Enthusiast', 'Problem Solver', 'Tech Innovator'],
     quote: 'Creating amazing digital experiences with cutting-edge technology',
