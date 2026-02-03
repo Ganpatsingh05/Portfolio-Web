@@ -20,6 +20,7 @@ interface Project {
   status: 'completed' | 'in-progress' | 'planning'
   featured?: boolean
   image_url?: string
+  sort_order?: number
 }
 
 export default function Projects() {
