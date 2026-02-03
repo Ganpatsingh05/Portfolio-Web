@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react'
 import { FaGithub, FaExternalLinkAlt, FaRocket, FaStar, FaEye, FaCode } from 'react-icons/fa'
 import { BiGitBranch } from 'react-icons/bi'
 import LottieAnimation from '../animations/LottieAnimation'
-import { openProjectDemo, openProjectCode } from '../../utils/actions'
+import { openProjectDemo, openProjectCode, scrollToSection } from '../../utils/actions'
 import { useProjects } from '@/lib/hooks'
 
 interface Project {
@@ -21,6 +21,8 @@ interface Project {
   featured?: boolean
   image_url?: string
   sort_order?: number
+  start_date?: string
+  end_date?: string
 }
 
 export default function Projects() {
@@ -215,7 +217,6 @@ export default function Projects() {
                   <motion.button
                     onClick={() => openProjectCode(project.github_url || '#')}
                     whileTap={{ scale: 0.95 }}
-                    whileTap={{ scale: 0.95 }}
                     className="flex-1 flex items-center justify-center gap-2 bg-gray-900 dark:bg-gray-700 text-white py-3 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors font-medium"
                   >
                     <FaGithub className="text-xs sm:text-sm" />
@@ -247,7 +248,7 @@ export default function Projects() {
             <div className="col-span-full text-center py-8 sm:py-12">
               {error ? (
                 <div className="text-red-500 dark:text-red-400">
-                  <p className="text-base sm:text-lg mb-2">{error}</p>
+                  <p className="text-base sm:text-lg mb-2">{error.message || 'Failed to load projects'}</p>
                   <p className="text-xs sm:text-sm">Showing fallback projects</p>
                 </div>
               ) : (
