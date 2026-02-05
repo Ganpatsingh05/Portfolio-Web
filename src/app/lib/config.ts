@@ -33,7 +33,7 @@ export const config = {
   // API Configuration
   api: {
     baseUrl: optionalEnvVars.BACKEND_API_URL,
-    timeout: 10000, // 10 seconds
+    timeout: 30000, // 30 seconds - increased for Render cold starts
   },
 
   // Supabase Configuration
