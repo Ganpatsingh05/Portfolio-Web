@@ -5,7 +5,7 @@ import { adminApi, ensureAuthedClient } from '@/app/lib/admin/api';
 import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmModal';
 
-interface Project { id: string; title: string; description: string; category?: string; technologies?: string[]; demo_url?: string; github_url?: string; created_at: string; }
+interface Project { id: string; title: string; description: string; category?: string; technologies?: string[]; demo_url?: string; github_url?: string; sort_order?: number; created_at: string; }
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -19,19 +19,29 @@ export default function ProjectsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-    title: '', description: '', category: '', technologies: '', demo_url: '', github_url: ''
+    title: '', description: '', category: '', technologies: '', demo_url: '', github_url: '', sort_order: 0
   });
 
   const load = async () => {
-    try { setProjects(await adminApi.projects.list()); } catch (e: any) { if (e.status===401) { router.replace('/admin/login'); return;} setError(e.message); } finally { setLoading(false);} };
+    try { 
+      const list = await adminApi.projects.list();
+      // Sort by sort_order ascending, then by created_at descending
+      list.sort((a: Project, b: Project) => {
+        const orderA = a.sort_order ?? 999999;
+        const orderB = b.sort_order ?? 999999;
+        if (orderA !== orderB) return orderA - orderB;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      setProjects(list);
+    } catch (e: any) { if (e.status===401) { router.replace('/admin/login'); return;} setError(e.message); } finally { setLoading(false);} };
   useEffect(()=>{ if(!ensureAuthedClient()){router.replace('/admin/login');return;} load(); },[router]);
 
-  const startAdd = () => { setEditing(null); setForm({ title:'', description:'', category:'', technologies:'', demo_url:'', github_url:'' }); setShowForm(true);} ;
-  const startEdit = (p: Project) => { setEditing(p); setForm({ title:p.title, description:p.description, category:p.category||'', technologies:(p.technologies||[]).join(', '), demo_url:p.demo_url||'', github_url:p.github_url||''}); setShowForm(true);} ;
+  const startAdd = () => { setEditing(null); setForm({ title:'', description:'', category:'', technologies:'', demo_url:'', github_url:'', sort_order: projects.length > 0 ? Math.max(...projects.map(p => p.sort_order || 0)) + 1 : 1 }); setShowForm(true);} ;
+  const startEdit = (p: Project) => { setEditing(p); setForm({ title:p.title, description:p.description, category:p.category||'', technologies:(p.technologies||[]).join(', '), demo_url:p.demo_url||'', github_url:p.github_url||'', sort_order:p.sort_order||0}); setShowForm(true);} ;
 
   const save = async () => {
     setSaving(true);
-    const payload = { ...form, technologies: form.technologies.split(',').map(t=>t.trim()).filter(Boolean) };
+    const payload = { ...form, technologies: form.technologies.split(',').map(t=>t.trim()).filter(Boolean), sort_order: Number(form.sort_order) || 0 };
     try {
       if (editing) await adminApi.projects.update(editing.id, payload); else await adminApi.projects.create(payload);
       setShowForm(false); load();
@@ -126,7 +136,12 @@ export default function ProjectsPage() {
               <div className="p-5">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-semibold text-gray-900 dark:text-white text-lg truncate">{p.title}</h2>
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-semibold text-gray-900 dark:text-white text-lg truncate">{p.title}</h2>
+                      <span className="flex-shrink-0 inline-flex items-center justify-center w-6 h-6 text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full" title={`Display order: ${p.sort_order ?? 0}`}>
+                        {p.sort_order ?? 0}
+                      </span>
+                    </div>
                     <span className="inline-block px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded mt-1">
                       {p.category || 'Uncategorized'}
                     </span>
@@ -298,6 +313,18 @@ export default function ProjectsPage() {
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 px-3 py-2.5 text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition" 
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Display Order</label>
+                <input 
+                  type="number" 
+                  value={form.sort_order} 
+                  onChange={e => setForm(f => ({...f, sort_order: parseInt(e.target.value) || 0}))} 
+                  placeholder="0"
+                  min="0"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 px-3 py-2.5 text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition" 
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Lower numbers appear first (0, 1, 2, 3...)</p>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-3 bg-gray-50 dark:bg-gray-800/50">

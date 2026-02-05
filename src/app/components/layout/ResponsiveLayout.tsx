@@ -1,21 +1,28 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import { api } from '@/app/lib/api'
 import { apiEndpoints } from '@/app/lib/config'
 
-// Desktop Components
-import Hero from '../sections/Hero'
-import About from '../sections/About'
-import Projects from '../sections/Projects'
-import Experience from '../sections/Experience'
-import Skills from '../sections/Skills'
-import Contact from '../sections/Contact'
+// Critical components loaded immediately
 import Footer from '../ui/Footer'
 
-// Mobile Components
-import MobileHero from '../mobile/MobileHero'
-import MobileAbout from '../mobile/MobileAbout'
+// Lazy load sections for better initial load
+const Hero = dynamic(() => import('../sections/Hero'), {
+  loading: () => <div className="min-h-screen animate-pulse bg-gray-50 dark:bg-gray-800" />,
+})
+const About = dynamic(() => import('../sections/About'))
+const Projects = dynamic(() => import('../sections/Projects'))
+const Experience = dynamic(() => import('../sections/Experience'))
+const Skills = dynamic(() => import('../sections/Skills'))
+const Contact = dynamic(() => import('../sections/Contact'))
+
+// Mobile components
+const MobileHero = dynamic(() => import('../mobile/MobileHero'), {
+  loading: () => <div className="min-h-screen animate-pulse bg-gray-50 dark:bg-gray-800" />,
+})
+const MobileAbout = dynamic(() => import('../mobile/MobileAbout'))
 
 interface SiteSettings {
   maintenance_mode: boolean
@@ -48,27 +55,8 @@ interface ResponsiveLayoutProps {
 export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   const [isMobile, setIsMobile] = useState(false)
   const [settings, setSettings] = useState<SiteSettings>(defaultSettings)
-  const [settingsLoaded, setSettingsLoaded] = useState(false)
 
-  // Fetch site settings
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const data = await api.getSettings()
-        setSettings({
-          ...defaultSettings,
-          ...data,
-        })
-      } catch (error) {
-        console.error('Failed to fetch settings:', error)
-        // Use defaults on error
-      } finally {
-        setSettingsLoaded(true)
-      }
-    }
-    fetchSettings()
-  }, [])
-
+  // Detect mobile immediately (synchronous)
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 768)
@@ -79,46 +67,58 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
-  // Track page view analytics
+  // Fetch settings asynchronously without blocking render
   useEffect(() => {
-    const trackPageView = async () => {
+    const fetchSettings = async () => {
       try {
-        await fetch(apiEndpoints.analytics, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            event_type: 'page_view',
-            event_data: { 
-              page: 'portfolio',
-              timestamp: new Date().toISOString(),
-              viewport: isMobile ? 'mobile' : 'desktop'
-            },
-          }),
+        const data = await api.getSettings()
+        setSettings({
+          ...defaultSettings,
+          ...data,
         })
       } catch (error) {
-        console.error('Failed to track page view:', error)
+        console.warn('Failed to fetch settings, using defaults:', error)
       }
     }
+    
+    // Defer settings fetch
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(fetchSettings)
+    } else {
+      setTimeout(fetchSettings, 0)
+    }
+  }, [])
 
-    // Track page view when component mounts
-    trackPageView()
+  // Track page view analytics (deferred)
+  useEffect(() => {
+    const trackPageView = () => {
+      fetch(apiEndpoints.analytics, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type: 'page_view',
+          event_data: { 
+            page: 'portfolio',
+            timestamp: new Date().toISOString(),
+            viewport: isMobile ? 'mobile' : 'desktop'
+          },
+        }),
+        keepalive: true, // Ensure the request completes even if page unloads
+      }).catch(() => {}) // Silent fail for analytics
+    }
+    
+    // Defer analytics to not block rendering
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(trackPageView)
+    } else {
+      setTimeout(trackPageView, 1000)
+    }
   }, [isMobile])
 
   // Helper to check if a section is visible
   const isVisible = (section: string) => settings.visible_sections.includes(section)
 
-  // Show loading state while settings load
-  if (!settingsLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-
-  // Show maintenance page if enabled
+  // Maintenance mode check
   if (settings.maintenance_mode) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden relative">

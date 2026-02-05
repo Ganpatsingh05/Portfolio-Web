@@ -182,7 +182,8 @@ export default function MobileHero() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="text-4xl font-bold text-gray-900 dark:text-white leading-tight"
+          className="text-4xl font-bold text-gray-900 dark:text-white pb-4 overflow-visible relative z-10"
+          style={{ lineHeight: '1.3' }}
         >
           Ganpat Singh
         </motion.h1>

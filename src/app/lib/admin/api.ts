@@ -148,10 +148,10 @@ async function uploadRequest<T>(path: string, formData: FormData): Promise<T> {
 
 export const adminApi = {
   // Authentication
-  login: (username: string, password: string) => 
+  login: (email: string, password: string) => 
     request<{token: string; user: any; message: string}>(`/api/admin/login`, {
       method: 'POST',
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ email, password })
     }),
 
   // Dashboard

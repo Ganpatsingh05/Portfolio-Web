@@ -4,7 +4,7 @@ import { adminApi } from '@/app/lib/admin/api';
 import { useRouter } from 'next/navigation';
 
 export default function AdminLoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setLoading(true); setError(null);
     try {
-      const res = await adminApi.login(username, password);
+      const res = await adminApi.login(email, password);
       console.log("Reponse from backend: ",res);
       if (typeof window !== 'undefined') localStorage.setItem('adminToken', res.token);
       router.push('/admin');
@@ -32,11 +32,13 @@ export default function AdminLoginPage() {
         <h1 className="text-2xl font-bold mb-6 text-center text-black">Admin Login</h1>
         <form onSubmit={submit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-black mb-1">Username</label>
+            <label className="block text-sm font-medium text-black mb-1">Email</label>
             <input 
-              value={username} 
-              onChange={e=>setUsername(e.target.value)} 
+              type="email"
+              value={email} 
+              onChange={e=>setEmail(e.target.value)} 
               required 
+              placeholder="your@email.com"
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-black" 
             />
           </div>

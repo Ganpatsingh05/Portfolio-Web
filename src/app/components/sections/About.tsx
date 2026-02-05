@@ -50,8 +50,8 @@ export default function About() {
   }, [])
 
   const stats = [
-    { number: "3+", label: "Years Experience", icon: FaClock },
-    { number: "50+", label: "Projects Completed", icon: FaRocket },
+    { number: "1", label: "Years Experience", icon: FaClock },
+    { number: "15+", label: "Projects Completed", icon: FaRocket },
     { number: "15+", label: "Technologies", icon: BsLightning },
     { number: "100%", label: "Client Satisfaction", icon: BsEmojiSmile }
   ]

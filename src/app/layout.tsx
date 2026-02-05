@@ -1,25 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, Fira_Code } from "next/font/google";
 import { ThemeProvider } from "@/app/components/ui/ThemeProvider";
 import { ThemeScript } from "@/app/components/ui/ThemeScript";
 import { QueryProvider } from "@/lib/QueryProvider";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-  fallback: ["system-ui", "arial", "sans-serif"],
-});
-
-const firaCode = Fira_Code({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-  fallback: ["Consolas", "Monaco", "monospace"],
-});
-
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: "Ganpat Singh - Full Stack Developer Portfolio",
   description: "Portfolio website of Ganpat Singh, a Full Stack Developer & AI Enthusiast specializing in React, Next.js, and Machine Learning",
   keywords: ["Full Stack Developer", "React", "Next.js", "TypeScript", "AI", "Machine Learning", "Portfolio", "Ganpat Singh"],
@@ -79,6 +65,14 @@ export default function RootLayout({
         <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        
+        {/* Preconnect to external domains */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
+        {/* DNS Prefetching for backend */}
+        <link rel="dns-prefetch" href="https://portfolio-web-gsr.onrender.com" />
+        
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/gslogo.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/gslogo.png" />
@@ -86,7 +80,10 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/favicon.ico" />
       </head>
       <body
-        className={`${inter.variable} ${firaCode.variable} antialiased bg-white dark:bg-gray-900`}
+        className="antialiased bg-white dark:bg-gray-900"
+        style={{
+          fontFamily: 'var(--font-geist-sans, Inter, system-ui, arial, sans-serif)',
+        }}
       >
         <QueryProvider>
           <ThemeProvider

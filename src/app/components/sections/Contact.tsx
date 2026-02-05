@@ -39,6 +39,8 @@ export default function Contact() {
     message: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [emailError, setEmailError] = useState('')
+  const [emailValid, setEmailValid] = useState(false)
 
   useEffect(() => {
     const fetchPersonalInfo = async () => {
@@ -52,8 +54,59 @@ export default function Contact() {
     fetchPersonalInfo()
   }, [])
 
+  // List of common disposable/temporary email domains to block
+  const disposableEmailDomains = [
+    '10minutemail.com', 'tempmail.com', 'guerrillamail.com', 'mailinator.com',
+    'throwaway.email', 'temp-mail.org', 'fakeinbox.com', 'trashmail.com',
+    'getnada.com', 'maildrop.cc', 'yopmail.com', 'mohmal.com', 'sharklasers.com',
+    'bugmenot.com', 'dispostable.com', 'spamgourmet.com', 'mintemail.com'
+  ]
+
+  const validateEmail = (email: string) => {
+    // Basic format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address')
+      setEmailValid(false)
+      return false
+    }
+
+    // Advanced format check (more strict)
+    const strictEmailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!strictEmailRegex.test(email)) {
+      setEmailError('Email format appears invalid')
+      setEmailValid(false)
+      return false
+    }
+
+    // Check for disposable email domains
+    const domain = email.split('@')[1]?.toLowerCase()
+    if (domain && disposableEmailDomains.includes(domain)) {
+      setEmailError('Disposable email addresses are not allowed')
+      setEmailValid(false)
+      return false
+    }
+
+    // Check for suspicious patterns
+    if (email.includes('..') || email.startsWith('.') || email.endsWith('.')) {
+      setEmailError('Email format appears invalid')
+      setEmailValid(false)
+      return false
+    }
+
+    setEmailError('')
+    setEmailValid(true)
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate email before submission
+    if (!validateEmail(formData.email)) {
+      return
+    }
+    
     setIsSubmitting(true)
     
     try {
@@ -73,10 +126,19 @@ export default function Contact() {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }))
+    
+    // Real-time email validation
+    if (name === 'email' && value) {
+      validateEmail(value)
+    } else if (name === 'email' && !value) {
+      setEmailError('')
+      setEmailValid(false)
+    }
   }
 
   return (
@@ -107,7 +169,7 @@ export default function Contact() {
           >
             <FaRocket className="text-4xl sm:text-5xl lg:text-6xl text-orange-500 mx-auto" />
           </motion.div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent mb-3 sm:mb-4 lg:mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent mb-3 sm:mb-4 lg:mb-6 leading-normal pb-2">
             Let's Work Together
           </h2>
           <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-800 dark:text-white max-w-3xl mx-auto leading-relaxed px-2">
@@ -128,7 +190,7 @@ export default function Contact() {
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 text-orange-600 dark:text-orange-300 whitespace-nowrap flex-shrink-0">
               <FaCode className="text-lg sm:text-xl" />
-              <span className="font-semibold text-xs sm:text-sm md:text-base">50+ Projects Completed</span>
+              <span className="font-semibold text-xs sm:text-sm md:text-base">15+ Projects Completed</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 text-orange-600 dark:text-orange-300 whitespace-nowrap flex-shrink-0">
               <FaHeart className="text-lg sm:text-xl" />
@@ -174,16 +236,44 @@ export default function Contact() {
                     <FaEnvelope className="text-orange-600 dark:text-orange-500" />
                     Email
                   </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
-                    placeholder="Enter your email address"
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 rounded-lg focus:ring-2 transition-all duration-200 bg-white dark:bg-gray-800/50 border text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base ${
+                        emailError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 
+                        emailValid ? 'border-green-500 focus:ring-green-500 focus:border-green-500' :
+                        'border-gray-300 dark:border-gray-600 focus:ring-orange-500 focus:border-orange-500'
+                      }`}
+                      placeholder="Enter your email address"
+                    />
+                    {formData.email && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {emailValid && (
+                          <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        )}
+                        {emailError && (
+                          <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {emailError && (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {emailError}
+                    </p>
+                  )}
                 </div>
               </div>
               
