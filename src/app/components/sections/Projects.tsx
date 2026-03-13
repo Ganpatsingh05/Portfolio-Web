@@ -1,11 +1,9 @@
 'use client'
 
-import React from 'react'
 import { motion } from 'framer-motion'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { FaGithub, FaExternalLinkAlt, FaRocket, FaStar, FaEye, FaCode } from 'react-icons/fa'
-import { BiGitBranch } from 'react-icons/bi'
-import LottieAnimation from '../animations/LottieAnimation'
 import { openProjectDemo, openProjectCode, scrollToSection } from '../../utils/actions'
 import { useProjects } from '@/lib/hooks'
 
@@ -20,26 +18,23 @@ interface Project {
   status: 'completed' | 'in-progress' | 'planning'
   featured?: boolean
   image_url?: string
-  sort_order?: number
   start_date?: string
   end_date?: string
+  timeline?: string
 }
 
 export default function Projects() {
   const [activeCategory, setActiveCategory] = useState<string>('All')
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const { data: projects = [], isLoading, error } = useProjects()
-  
-  const categories = ['All', 'Web Dev', 'Data Science', 'AI', 'ML']
 
-  const getProjectAnimation = (category: string, index: number) => {
-    const key = (category || '').toLowerCase()
-    if (key.includes('web')) return 'web'
-    if (key.includes('data')) return 'data'
-    if (key === 'ai' || key === 'ml' || key.includes('ai')) return 'ai'
-    const pool = ['rocket', 'mobile', 'coding', 'web'] as const
-    return pool[index % pool.length]
-  }
+  const formatCategory = (slug: string) =>
+    slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+  const categories = useMemo(() => {
+    const unique = Array.from(new Set(projects.map((p: Project) => p.category).filter(Boolean)))
+    return ['All', ...unique]
+  }, [projects])
 
   // Fixed filtering logic with proper memoization
   const filteredProjects = useMemo(() => {
@@ -122,7 +117,7 @@ export default function Projects() {
                   : 'bg-white/50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 active:bg-white/70 dark:active:bg-gray-700/70 border border-gray-200/30 dark:border-gray-700/30'
               }`}
             >
-              {category}
+              {category === 'All' ? 'All' : formatCategory(category)}
             </motion.button>
           ))}
         </motion.div>
@@ -144,7 +139,7 @@ export default function Projects() {
           ) : filteredProjects.length > 0 ? (
             filteredProjects.map((project, index) => (
               <motion.div
-                key={`project-${project.id}-${activeCategory}`}
+                key={`project-${project.id}`}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
@@ -155,45 +150,50 @@ export default function Projects() {
                 }}
                 className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl active:shadow-lg transition-all duration-200 overflow-hidden border border-gray-200/20 dark:border-gray-700/20"
               >
-              {/* Project Animation */}
+              {/* Project Image */}
               <div className="h-36 sm:h-44 lg:h-48 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-600 dark:from-orange-600 dark:via-amber-600 dark:to-yellow-700 relative overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <LottieAnimation 
-                    fallbackAnimation={getProjectAnimation(project.category, index)}
-                    className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 opacity-90"
-                  />
-                </div>
+                {project.image_url ? (
+                  <img src={project.image_url} alt={project.title} className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <FaRocket className="w-12 h-12 sm:w-16 sm:h-16 text-white/40" />
+                  </div>
+                )}
                 <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
                   <span className={`px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold ${getStatusColor(project.status)}`}>
                     {project.status.replace('-', ' ')}
                   </span>
                 </div>
-                <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4">
-                  <h3 className="text-white font-bold text-base sm:text-lg">
-                    {project.title}
-                  </h3>
-                </div>
               </div>
               
               <div className="p-4 sm:p-5 lg:p-6">
+                <h3 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white mb-3 sm:mb-4">
+                  {project.title}
+                </h3>
                 {/* Category Badge */}
                 <div className="flex justify-between items-center mb-3 sm:mb-4">
                   <span className="text-[10px] sm:text-xs bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 text-orange-800 dark:text-orange-200 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full font-semibold">
-                    {project.category}
+                    {project.category ? formatCategory(project.category) : 'Uncategorized'}
                   </span>
                   <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                     <span className="flex items-center gap-0.5 sm:gap-1">
                       <FaStar className="text-yellow-500" />
                       {project.featured ? '★' : '☆'}
                     </span>
-                    <span className="flex items-center gap-0.5 sm:gap-1">
-                      <BiGitBranch />
-                      {project.sort_order || 0}
-                    </span>
                   </div>
                 </div>
                 
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 line-clamp-2">{project.description}</p>
+
+                {/* Timeline */}
+                {project.timeline && (
+                  <div className="flex items-center gap-1.5 mb-3 sm:mb-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                    <svg className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{project.timeline}</span>
+                  </div>
+                )}
                 
                 {/* Technologies */}
                 <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-6">
@@ -290,7 +290,7 @@ export default function Projects() {
         </motion.div>
       </div>
 
-      {/* Project Detail Modal */}
+      {/* Project Detail Modal - rendered via portal */}
       {selectedProject && (
         <ProjectDetailModal 
           project={selectedProject} 
@@ -303,6 +303,11 @@ export default function Projects() {
 
 // Project Detail Modal Component
 function ProjectDetailModal({ project, onClose }: { project: Project; onClose: () => void }) {
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -312,12 +317,12 @@ function ProjectDetailModal({ project, onClose }: { project: Project; onClose: (
     }
   }
 
-  return (
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <motion.div
@@ -331,16 +336,15 @@ function ProjectDetailModal({ project, onClose }: { project: Project; onClose: (
         <div className="bg-gradient-to-r from-orange-500 to-amber-600 p-6 rounded-t-2xl">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
-              <LottieAnimation 
-                fallbackAnimation={(project.category ? ((cat => {
-                  const k = cat.toLowerCase()
-                  if (k.includes('web')) return 'web'
-                  if (k.includes('data')) return 'data'
-                  if (k === 'ai' || k === 'ml' || k.includes('ai')) return 'ai'
-                  return 'rocket'
-                })(project.category)) : 'rocket')}
-                className="w-16 h-16"
-              />
+              {project.image_url ? (
+                <div className="w-16 h-16 rounded-lg overflow-hidden">
+                  <img src={project.image_url} alt={project.title} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-lg bg-white/20 flex items-center justify-center">
+                  <FaRocket className="w-8 h-8 text-white/80" />
+                </div>
+              )}
               <div>
                 <h3 className="text-2xl font-bold text-white">{project.title}</h3>
                 <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mt-2 ${getStatusColor(project.status)}`}>
@@ -360,16 +364,11 @@ function ProjectDetailModal({ project, onClose }: { project: Project; onClose: (
         {/* Content */}
         <div className="p-6">
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="text-center bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
               <FaStar className="text-yellow-500 mx-auto mb-2" />
               <div className="font-bold text-lg">{project.featured ? 'Featured' : 'Project'}</div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Status</div>
-            </div>
-            <div className="text-center bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-              <BiGitBranch className="mx-auto mb-2" />
-              <div className="font-bold text-lg">{project.sort_order || 0}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Order</div>
             </div>
             <div className="text-center bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
               <FaCode className="mx-auto mb-2" />
@@ -399,10 +398,23 @@ function ProjectDetailModal({ project, onClose }: { project: Project; onClose: (
             </div>
           </div>
 
+          {/* Timeline */}
+          {project.timeline && (
+            <div className="mb-6">
+              <h4 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Timeline</h4>
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-gray-600 dark:text-gray-300">{project.timeline}</span>
+              </div>
+            </div>
+          )}
+
           {/* Project Timeline */}
           {(project.start_date || project.end_date) && (
             <div className="mb-6">
-              <h4 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Project Timeline</h4>
+              <h4 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Project Dates</h4>
               <div className="grid md:grid-cols-2 gap-2">
                 {project.start_date && (
                   <div className="flex items-center gap-2">
@@ -443,6 +455,7 @@ function ProjectDetailModal({ project, onClose }: { project: Project; onClose: (
           </div>
         </div>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   )
 }

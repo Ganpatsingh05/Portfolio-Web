@@ -1,6 +1,6 @@
 /**
  * Centralized API client for fetching data from backend
- * Handles errors, loading states, and provides consistent interface
+ * Handles errors, loading states, retries, and provides consistent interface
  */
 
 import { config, apiEndpoints } from './config';
@@ -17,56 +17,129 @@ export class ApiError extends Error {
 }
 
 /**
- * Generic fetch wrapper with error handling
+ * Wait for specified milliseconds (for retry delays)
+ */
+function wait(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Calculate exponential backoff delay
+ */
+function getRetryDelay(attempt: number): number {
+  // Exponential backoff: 1s, 2s, 4s
+  return Math.min(1000 * 2 ** attempt, 4000);
+}
+
+/**
+ * Generic fetch wrapper with error handling and automatic retries
  */
 async function fetchApi<T>(
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retries = 3,
+  allowFallback = true
 ): Promise<T> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+  let lastError: Error | null = null;
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
 
-    clearTimeout(timeoutId);
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new ApiError(
-        errorData.error || errorData.message || `Request failed with status ${response.status}`,
-        response.status,
-        errorData
-      );
-    }
+      clearTimeout(timeoutId);
 
-    const data = await response.json();
-    
-    // Handle nested data structure from backend (data.data or raw data)
-    return (data.data !== undefined ? data.data : data) as T;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    
-    if (error instanceof ApiError) {
-      throw error;
-    }
-
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new ApiError('Request timeout', 408);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        // Don't retry on 4xx errors (client errors) except 408 (timeout) and 429 (rate limit)
+        if (response.status >= 400 && response.status < 500 && 
+            response.status !== 408 && response.status !== 429) {
+          throw new ApiError(
+            errorData.error || errorData.message || `Request failed with status ${response.status}`,
+            response.status,
+            errorData
+          );
+        }
+        
+        // For 5xx errors, throw but allow retry
+        throw new ApiError(
+          errorData.error || errorData.message || `Server error: ${response.status}`,
+          response.status,
+          errorData
+        );
       }
-      throw new ApiError(error.message);
-    }
 
-    throw new ApiError('Unknown error occurred');
+      const data = await response.json();
+      
+      // Handle nested data structure from backend (data.data or raw data)
+      return (data.data !== undefined ? data.data : data) as T;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      lastError = error as Error;
+      
+      // Don't retry on ApiError with 4xx status (except specific cases)
+      if (error instanceof ApiError && error.status && 
+          error.status >= 400 && error.status < 500 &&
+          error.status !== 408 && error.status !== 429) {
+        throw error;
+      }
+
+      // If this is not the last attempt, wait and retry
+      if (attempt < retries) {
+        const delay = getRetryDelay(attempt);
+        console.warn(
+          `Request to ${url} failed (attempt ${attempt + 1}/${retries + 1}). Retrying in ${delay}ms...`,
+          error instanceof Error ? error.message : error
+        );
+        await wait(delay);
+        continue;
+      }
+
+      // Last attempt failed, throw the error
+      if (error instanceof ApiError) {
+        throw error;
+      }
+
+      const fallbackBaseUrl = config.api.fallbackBaseUrl;
+      const canTryFallback =
+        allowFallback &&
+        Boolean(fallbackBaseUrl) &&
+        fallbackBaseUrl !== config.api.baseUrl &&
+        url.startsWith(config.api.baseUrl);
+
+      if (canTryFallback) {
+        const fallbackUrl = url.replace(config.api.baseUrl, fallbackBaseUrl);
+        console.warn(`Primary API unavailable. Retrying with fallback API: ${fallbackUrl}`);
+        return fetchApi<T>(fallbackUrl, options, 1, false);
+      }
+
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new ApiError('Request timeout - server may be starting up', 408);
+        }
+        const isLocalApi = config.api.baseUrl.includes('localhost');
+        const message = isLocalApi
+          ? 'Unable to reach the local backend at http://localhost:5000. Start the backend server or update NEXT_PUBLIC_API_URL.'
+          : 'Unable to reach the API server. Please try again in a moment.';
+        throw new ApiError(message, 503);
+      }
+
+      throw new ApiError('Unknown error occurred');
+    }
   }
+
+  // Should never reach here, but just in case
+  throw lastError || new ApiError('Request failed after retries');
 }
 
 /**
@@ -129,6 +202,21 @@ export const api = {
       start_date?: string;
       end_date?: string;
     }>>(apiEndpoints.experiences);
+  },
+
+  // Certificates
+  async getCertificates() {
+    return fetchApi<Array<{
+      id?: string;
+      title: string;
+      issuer: string;
+      issue_date?: string;
+      credential_id?: string;
+      credential_url?: string;
+      description?: string;
+      image_url?: string;
+      sort_order?: number;
+    }>>(apiEndpoints.certificates);
   },
 
   // Personal info

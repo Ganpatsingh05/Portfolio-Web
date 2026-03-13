@@ -206,6 +206,22 @@ export const adminApi = {
     })
   },
 
+  // Certificates
+  certificates: {
+    list: () => request<any[]>(`/api/admin/certificates`),
+    create: (data: any) => request(`/api/admin/certificates`, { 
+      method: 'POST', 
+      body: JSON.stringify(data) 
+    }),
+    update: (id: string, data: any) => request(`/api/admin/certificates/${id}`, { 
+      method: 'PUT', 
+      body: JSON.stringify(data) 
+    }),
+    delete: (id: string) => request(`/api/admin/certificates/${id}`, { 
+      method: 'DELETE' 
+    })
+  },
+
   // Messages
   messages: {
     list: () => request<any[]>(`/api/admin/messages`),

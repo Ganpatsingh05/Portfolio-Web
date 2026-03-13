@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { api, fallbackData } from './api'
 
 // Query keys for consistent caching
@@ -7,6 +7,7 @@ export const queryKeys = {
   projects: ['projects'] as const,
   skills: ['skills'] as const,
   experiences: ['experiences'] as const,
+  certificates: ['certificates'] as const,
   personalInfo: ['personalInfo'] as const,
 }
 
@@ -70,6 +71,21 @@ export function useExperiences() {
   })
 }
 
+// Hook: Fetch certificates
+export function useCertificates() {
+  return useQuery({
+    queryKey: queryKeys.certificates,
+    queryFn: async () => {
+      try {
+        const data = await api.getCertificates()
+        return data
+      } catch {
+        return []
+      }
+    },
+  })
+}
+
 // Hook: Fetch personal info
 export function usePersonalInfo() {
   return useQuery({
@@ -100,8 +116,6 @@ export function useContactForm() {
 
 // Hook: Track analytics
 export function useAnalytics() {
-  const queryClient = useQueryClient()
-  
   return useMutation({
     mutationFn: ({ eventType, eventData }: { eventType: string; eventData: Record<string, unknown> }) =>
       api.trackEvent(eventType, eventData),

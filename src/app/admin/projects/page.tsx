@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi, ensureAuthedClient } from '@/app/lib/admin/api';
 import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmModal';
 
-interface Project { id: string; title: string; description: string; category?: string; technologies?: string[]; demo_url?: string; github_url?: string; sort_order?: number; created_at: string; }
+interface Project { id: string; title: string; description: string; category?: string; technologies?: string[]; demo_url?: string; github_url?: string; image_url?: string; timeline?: string; visible?: boolean; created_at: string; }
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -17,31 +17,55 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [form, setForm] = useState({
-    title: '', description: '', category: '', technologies: '', demo_url: '', github_url: '', sort_order: 0
+    title: '', description: '', category: '', technologies: '', demo_url: '', github_url: '', image_url: '', timeline: ''
   });
 
   const load = async () => {
     try { 
       const list = await adminApi.projects.list();
-      // Sort by sort_order ascending, then by created_at descending
+      // Sort by timeline descending (current first), then by created_at descending
       list.sort((a: Project, b: Project) => {
-        const orderA = a.sort_order ?? 999999;
-        const orderB = b.sort_order ?? 999999;
-        if (orderA !== orderB) return orderA - orderB;
+        const tA = a.timeline || '';
+        const tB = b.timeline || '';
+        if (tA && !tB) return -1;
+        if (!tA && tB) return 1;
+        if (tA !== tB) return tB.localeCompare(tA);
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       setProjects(list);
     } catch (e: any) { if (e.status===401) { router.replace('/admin/login'); return;} setError(e.message); } finally { setLoading(false);} };
   useEffect(()=>{ if(!ensureAuthedClient()){router.replace('/admin/login');return;} load(); },[router]);
 
-  const startAdd = () => { setEditing(null); setForm({ title:'', description:'', category:'', technologies:'', demo_url:'', github_url:'', sort_order: projects.length > 0 ? Math.max(...projects.map(p => p.sort_order || 0)) + 1 : 1 }); setShowForm(true);} ;
-  const startEdit = (p: Project) => { setEditing(p); setForm({ title:p.title, description:p.description, category:p.category||'', technologies:(p.technologies||[]).join(', '), demo_url:p.demo_url||'', github_url:p.github_url||'', sort_order:p.sort_order||0}); setShowForm(true);} ;
+  const startAdd = () => { setEditing(null); setForm({ title:'', description:'', category:'', technologies:'', demo_url:'', github_url:'', image_url: '', timeline: '' }); setImagePreview(null); setShowForm(true);} ;
+  const startEdit = (p: Project) => { setEditing(p); setForm({ title:p.title, description:p.description, category:p.category||'', technologies:(p.technologies||[]).join(', '), demo_url:p.demo_url||'', github_url:p.github_url||'', image_url:p.image_url||'', timeline:p.timeline||''}); setImagePreview(p.image_url||null); setShowForm(true);} ;
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Invalid File', 'Please select an image file'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('File Too Large', 'Image must be less than 5MB'); return; }
+    setUploading(true);
+    try {
+      const result = await adminApi.upload.image(file);
+      const url = result.url || result.publicUrl || '';
+      setForm(f => ({ ...f, image_url: url }));
+      setImagePreview(url);
+    } catch (err: any) {
+      toast.error('Upload Failed', err.message || 'Failed to upload image');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const save = async () => {
     setSaving(true);
-    const payload = { ...form, technologies: form.technologies.split(',').map(t=>t.trim()).filter(Boolean), sort_order: Number(form.sort_order) || 0 };
+    const payload = { ...form, technologies: form.technologies.split(',').map(t=>t.trim()).filter(Boolean), image_url: form.image_url || null, timeline: form.timeline || null };
     try {
       if (editing) await adminApi.projects.update(editing.id, payload); else await adminApi.projects.create(payload);
       setShowForm(false); load();
@@ -53,7 +77,7 @@ export default function ProjectsPage() {
     }
   };
 
-  const del = async (p: Project) => { 
+  const del = async (p: Project) => {
     const confirmed = await confirm({
       title: 'Delete Project?',
       message: `Are you sure you want to delete "${p.title}"? This action cannot be undone.`,
@@ -61,14 +85,25 @@ export default function ProjectsPage() {
       confirmText: 'Delete',
       cancelText: 'Cancel'
     });
-    if(!confirmed) return; 
-    try { 
-      await adminApi.projects.delete(p.id); 
+    if(!confirmed) return;
+    try {
+      await adminApi.projects.delete(p.id);
       load();
       toast.success('Deleted!', 'Project removed successfully');
-    } catch(e:any){ 
-      toast.error('Delete Failed', e.message || 'Failed to delete project'); 
-    } 
+    } catch(e:any){
+      toast.error('Delete Failed', e.message || 'Failed to delete project');
+    }
+  };
+
+  const toggleVisibility = async (p: Project) => {
+    const newVisible = !(p.visible !== false);
+    try {
+      await adminApi.projects.update(p.id, { visible: newVisible });
+      setProjects(prev => prev.map(proj => proj.id === p.id ? { ...proj, visible: newVisible } : proj));
+      toast.success(newVisible ? 'Visible' : 'Hidden', `Project is now ${newVisible ? 'visible' : 'hidden'} on the site`);
+    } catch (e: any) {
+      toast.error('Update Failed', e.message || 'Failed to update visibility');
+    }
   };
 
   if (loading) {
@@ -132,15 +167,25 @@ export default function ProjectsPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {projects.map(p => (
-            <div key={p.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition group">
+            <div key={p.id} className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition group ${p.visible === false ? 'border-gray-300 dark:border-gray-600 opacity-60' : 'border-gray-200 dark:border-gray-700'}`}>
+              {p.visible === false && (
+                <div className="px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l18 18" />
+                  </svg>
+                  <span className="text-xs font-medium text-yellow-700 dark:text-yellow-400">Hidden from site</span>
+                </div>
+              )}
+              {p.image_url && (
+                <div className="w-full h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                  <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                </div>
+              )}
               <div className="p-5">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h2 className="font-semibold text-gray-900 dark:text-white text-lg truncate">{p.title}</h2>
-                      <span className="flex-shrink-0 inline-flex items-center justify-center w-6 h-6 text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full" title={`Display order: ${p.sort_order ?? 0}`}>
-                        {p.sort_order ?? 0}
-                      </span>
                     </div>
                     <span className="inline-block px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded mt-1">
                       {p.category || 'Uncategorized'}
@@ -183,8 +228,24 @@ export default function ProjectsPage() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <button 
-                    onClick={() => startEdit(p)} 
+                  <button
+                    onClick={() => toggleVisibility(p)}
+                    className={`p-1.5 rounded-lg transition ${p.visible === false ? 'hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400' : 'hover:bg-yellow-100 dark:hover:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'}`}
+                    title={p.visible === false ? 'Show on site' : 'Hide from site'}
+                  >
+                    {p.visible === false ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l18 18" />
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => startEdit(p)}
                     className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition"
                     title="Edit"
                   >
@@ -230,6 +291,69 @@ export default function ProjectsPage() {
               </button>
             </div>
             <div className="p-6 space-y-5 overflow-y-auto max-h-[calc(90vh-140px)]">
+              {/* Image Upload */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+                  Project Image <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <div className="flex items-start gap-4">
+                  {imagePreview ? (
+                    <div className="relative w-32 h-24 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shrink-0">
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => { setImagePreview(null); setForm(f => ({ ...f, image_url: '' })); }}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-24 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center shrink-0">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                      className="hidden"
+                      id="project-image-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50"
+                    >
+                      {uploading ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                          </svg>
+                          {imagePreview ? 'Change Image' : 'Upload Image'}
+                        </>
+                      )}
+                    </button>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">JPEG, PNG, GIF, WebP. Max 5MB.</p>
+                  </div>
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Title</label>
                 <input 
@@ -315,16 +439,14 @@ export default function ProjectsPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Display Order</label>
-                <input 
-                  type="number" 
-                  value={form.sort_order} 
-                  onChange={e => setForm(f => ({...f, sort_order: parseInt(e.target.value) || 0}))} 
-                  placeholder="0"
-                  min="0"
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 px-3 py-2.5 text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition" 
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Timeline</label>
+                <input
+                  value={form.timeline}
+                  onChange={e => setForm(f => ({...f, timeline: e.target.value}))}
+                  placeholder="e.g. Jan 2024 - Mar 2024"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 px-3 py-2.5 text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Lower numbers appear first (0, 1, 2, 3...)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">e.g. "Jan 2024 - Mar 2024" or "2 weeks"</p>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-3 bg-gray-50 dark:bg-gray-800/50">
