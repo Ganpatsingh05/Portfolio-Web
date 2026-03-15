@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { 
   FaReact, 
   FaNodeJs, 
@@ -18,7 +18,9 @@ import {
   FaStar,
   FaLightbulb,
   FaUsers,
-  FaCogs
+  FaCogs,
+  FaComments,
+  FaClock
 } from 'react-icons/fa'
 import { 
   SiTypescript, 
@@ -26,7 +28,6 @@ import {
   SiPostgresql, 
   SiMongodb, 
   SiTensorflow,
-  SiNextdotjs,
   SiJavascript
 } from 'react-icons/si'
 import { useSkills } from '@/lib/hooks'
@@ -69,6 +70,8 @@ const categoryColors = {
   backend: 'from-emerald-500 to-green-600',
   tools: 'from-orange-500 to-red-500',
   'ai-ml': 'from-orange-600 to-purple-600',
+  languages: 'from-blue-500 to-indigo-600',
+  database: 'from-teal-500 to-cyan-600',
   other: 'from-cyan-500 to-teal-600',
   custom: 'from-fuchsia-500 to-pink-600',
   default: 'from-violet-500 to-indigo-600'
@@ -79,6 +82,8 @@ const categoryIcons = {
   backend: <FaDatabase className="text-emerald-500" />,
   tools: <FaTools className="text-orange-500" />,
   'ai-ml': <FaBrain className="text-purple-500" />,
+  languages: <FaCode className="text-blue-500" />,
+  database: <FaDatabase className="text-teal-500" />,
   other: <FaTools className="text-teal-500" />,
   custom: <FaFlask className="text-fuchsia-500" />
 }
@@ -88,6 +93,8 @@ const categoryNames = {
   backend: 'Backend',
   tools: 'Tools & DevOps',
   'ai-ml': 'AI & ML',
+  languages: 'Languages',
+  database: 'Database',
   other: 'Other',
   custom: 'Custom'
 }
@@ -117,33 +124,39 @@ const getCategoryLabel = (cat?: string) => {
 
 export default function Skills() {
   const [activeCategory, setActiveCategory] = useState<string>('all')
-  const [hoveredSkill, setHoveredSkill] = useState<string | null>(null)
   const { data: rawSkills = [], isLoading } = useSkills()
   
-  // Sort skills by category, level, name
-  const skills = rawSkills.slice().sort((a: Skill, b: Skill) => {
+  // Sort skills by category, level, name (memoized to avoid re-sorting on every render)
+  const skills = useMemo(() => rawSkills.slice().sort((a: Skill, b: Skill) => {
     const ca = (a.category || '').toLowerCase()
     const cb = (b.category || '').toLowerCase()
     if (ca < cb) return -1
     if (ca > cb) return 1
     if (a.level !== b.level) return b.level - a.level
     return (a.name || '').localeCompare(b.name || '')
-  })
+  }), [rawSkills])
   
-  const categories = ['all', 'frontend', 'backend', 'tools', 'ai-ml', 'other', 'custom']
+  const categories = useMemo(() => {
+    const knownOrder = ['frontend', 'backend', 'languages', 'database', 'tools', 'ai-ml', 'other', 'custom']
+    const uniqueCats = Array.from(new Set(skills.map((s: Skill) => s.category).filter(Boolean)))
+    const ordered = knownOrder.filter(c => uniqueCats.includes(c))
+    const extra = uniqueCats.filter(c => !knownOrder.includes(c))
+    return ['all', ...ordered, ...extra]
+  }, [skills])
   
-  const filteredSkills = activeCategory === 'all' 
+  const filteredSkills = useMemo(() => activeCategory === 'all' 
     ? skills 
-    : skills.filter((skill: Skill) => skill.category === activeCategory)
+    : skills.filter((skill: Skill) => skill.category === activeCategory),
+    [activeCategory, skills])
 
-  const skillsStats = {
+  const skillsStats = useMemo(() => ({
     total: skills.length,
     frontend: skills.filter((s: Skill) => s.category === 'frontend').length,
     backend: skills.filter((s: Skill) => s.category === 'backend').length,
     tools: skills.filter((s: Skill) => s.category === 'tools').length,
     'ai-ml': skills.filter((s: Skill) => s.category === 'ai-ml').length,
     avgLevel: skills.length > 0 ? Math.round(skills.reduce((sum: number, skill: Skill) => sum + skill.level, 0) / skills.length) : 0
-  }
+  }), [skills])
 
   if (isLoading) {
     return (
@@ -253,10 +266,8 @@ export default function Skills() {
               key={skill.id}
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
+              transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.3) }}
               viewport={{ once: true }}
-              onHoverStart={() => setHoveredSkill(skill.name)}
-              onHoverEnd={() => setHoveredSkill(null)}
               className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-4 sm:p-5 lg:p-6 shadow-lg transition-all duration-200 border border-orange-200 dark:border-gray-700 group"
             >
               <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -279,7 +290,7 @@ export default function Skills() {
                 <motion.div
                   initial={{ width: 0 }}
                   whileInView={{ width: `${skill.level}%` }}
-                  transition={{ duration: 1, delay: index * 0.05, ease: "easeOut" }}
+                  transition={{ duration: 0.8, delay: Math.min(index * 0.04, 0.25), ease: [0.22, 1, 0.36, 1] }}
                   viewport={{ once: true }}
                   className={`h-full bg-gradient-to-r ${getCategoryGradient(skill.category)} rounded-full`}
                 />
@@ -294,7 +305,7 @@ export default function Skills() {
           ))}
         </div>
 
-        {/* Additional Skills Section */}
+        {/* Soft Skills Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -303,42 +314,41 @@ export default function Skills() {
           className="mt-12 sm:mt-16 lg:mt-20"
         >
           <div className="text-center mb-6 sm:mb-8 lg:mb-10">
-            <FaLightbulb className="text-3xl sm:text-4xl text-orange-500 mx-auto mb-3 sm:mb-4" />
+            <FaUsers className="text-3xl sm:text-4xl text-orange-500 mx-auto mb-3 sm:mb-4" />
             <h3 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-3 sm:mb-4">
-              Additional Expertise
+              Soft Skills
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              Soft skills and methodologies that enhance my technical abilities
+              Interpersonal and professional skills that complement my technical expertise
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {[
-              { name: 'Problem Solving', icon: <FaLightbulb /> },
-              { name: 'Team Collaboration', icon: <FaUsers /> },
-              { name: 'Agile/Scrum', icon: <FaCogs /> },
-              { name: 'API Design', icon: <FaCode /> },
-              { name: 'Testing', icon: <FaFlask /> },
-              { name: 'CI/CD', icon: <FaRocket /> }
+              { name: 'Problem Solving', icon: <FaLightbulb />, desc: 'Analytical thinking' },
+              { name: 'Team Collaboration', icon: <FaUsers />, desc: 'Effective teamwork' },
+              { name: 'Communication', icon: <FaComments />, desc: 'Clear & concise' },
+              { name: 'Leadership', icon: <FaStar />, desc: 'Guiding teams' },
+              { name: 'Adaptability', icon: <FaCogs />, desc: 'Quick learner' },
+              { name: 'Time Management', icon: <FaClock />, desc: 'Meeting deadlines' },
+              { name: 'Critical Thinking', icon: <FaBrain />, desc: 'Logical reasoning' },
+              { name: 'Creativity', icon: <FaRocket />, desc: 'Innovative solutions' },
             ].map((skill, index) => (
               <motion.div
                 key={skill.name}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: Math.min(index * 0.06, 0.4) }}
                 viewport={{ once: true }}
-                whileHover={{ scale: 1.05, y: -2 }}
-                className="bg-white dark:bg-gray-800 text-center p-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-orange-200 dark:border-gray-700 group"
+                className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-xl shadow-md border border-orange-200 dark:border-gray-700 group hover:border-orange-400 dark:hover:border-orange-600 transition-colors"
               >
-                <motion.div
-                  whileHover={{ rotate: 10 }}
-                  className="text-2xl text-orange-500 mb-2 group-hover:text-orange-600 transition-colors"
-                >
+                <div className="text-2xl sm:text-3xl text-orange-500 mb-2 sm:mb-3 group-hover:text-orange-600 transition-colors">
                   {skill.icon}
-                </motion.div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                </div>
+                <h4 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                   {skill.name}
-                </span>
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{skill.desc}</p>
               </motion.div>
             ))}
           </div>

@@ -21,7 +21,6 @@ export default function SkillsPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
 
-  const categoryLabel = (c: string) => c || 'uncategorized';
   const load = async () => {
     try {
       const list = await adminApi.skills.list();

@@ -12,6 +12,5 @@ export default function robots(): MetadataRoute.Robots {
       ],
     },
     sitemap: 'https://ganpatsingh.tech/sitemap.xml',
-    host: 'https://ganpatsingh.tech',
   }
 }

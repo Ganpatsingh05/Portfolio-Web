@@ -10,7 +10,6 @@ export default function AdminHome() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentMessages, setRecentMessages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,22 +30,9 @@ export default function AdminHome() {
           return; 
         }
         setError(e.message || 'Failed to load dashboard');
-      } finally { 
-        setLoading(false); 
       }
     })();
   }, [router]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (

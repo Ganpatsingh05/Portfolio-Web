@@ -1,11 +1,12 @@
 ﻿"use client";
 
 import AuthShell from "./AuthShell";
-import { AdminThemeProvider, useAdminTheme, AdminThemeScript } from "./ThemeProvider";
+import { AdminThemeProvider, useAdminTheme } from "./ThemeProvider";
 import { ToastProvider } from "./components/Toast";
 import { ConfirmProvider } from "./components/ConfirmModal";
 import "../globals.css";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 import { useEffect, useState, useLayoutEffect } from 'react';
 import { config } from '@/lib/config';
@@ -41,7 +42,7 @@ function AdminHeader() {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14 sm:h-16">
           <div className="flex items-center gap-2 sm:gap-3">
-            <a href="/admin" className="inline-flex items-center gap-2 sm:gap-3 group">
+            <Link href="/admin" className="inline-flex items-center gap-2 sm:gap-3 group">
               <div className="relative">
                 <img
                   src="/gslogo.png"
@@ -57,7 +58,7 @@ function AdminHeader() {
                   Content Management
                 </span>
               </div>
-            </a>
+            </Link>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Status indicator */}
@@ -124,6 +125,7 @@ const navItems = [
   { href: '/admin/projects', icon: 'projects', label: 'Projects' },
   { href: '/admin/experiences', icon: 'experience', label: 'Experience' },
   { href: '/admin/skills', icon: 'skills', label: 'Skills' },
+  { href: '/admin/certificates', icon: 'certificates', label: 'Certificates' },
   { href: '/admin/messages', icon: 'messages', label: 'Messages' },
   { href: '/admin/personal', icon: 'personal', label: 'Personal' },
   { href: '/admin/hero', icon: 'hero', label: 'Hero' },
@@ -152,6 +154,11 @@ const getIcon = (icon: string, className: string = "w-5 h-5") => {
       <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+    certificates: (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
       </svg>
     ),
     messages: (
@@ -187,10 +194,10 @@ function AdminSidebar() {
       <nav className="mt-4 pb-4">
         <div className="px-3">
           <div className="space-y-1">
-            {navItems.slice(0, 7).map((item) => {
+            {navItems.slice(0, 8).map((item) => {
               const isActive = pathname === item.href;
               return (
-                <a 
+                <Link 
                   key={item.href}
                   href={item.href} 
                   className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
@@ -203,16 +210,16 @@ function AdminSidebar() {
                     {getIcon(item.icon)}
                   </span>
                   {item.label}
-                </a>
+                </Link>
               );
             })}
             
             <div className="border-t border-gray-200 dark:border-gray-700 my-3"></div>
             
-            {navItems.slice(7).map((item) => {
+            {navItems.slice(8).map((item) => {
               const isActive = pathname === item.href;
               return (
-                <a 
+                <Link 
                   key={item.href}
                   href={item.href} 
                   className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
@@ -225,7 +232,7 @@ function AdminSidebar() {
                     {getIcon(item.icon)}
                   </span>
                   {item.label}
-                </a>
+                </Link>
               );
             })}
           </div>
@@ -251,7 +258,7 @@ function MobileBottomNav() {
         {mobileNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center justify-center flex-1 h-full py-2 transition-colors ${
@@ -262,7 +269,7 @@ function MobileBottomNav() {
             >
               {getIcon(item.icon, "w-6 h-6")}
               <span className="text-[10px] mt-1 font-medium">{item.label}</span>
-            </a>
+            </Link>
           );
         })}
         
@@ -289,7 +296,7 @@ function MobileBottomNav() {
             {navItems.filter(item => !mobileNavItems.includes(item)).map((item) => {
               const isActive = pathname === item.href;
               return (
-                <a
+                <Link
                   key={item.href}
                   href={item.href}
                   className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
@@ -300,7 +307,7 @@ function MobileBottomNav() {
                 >
                   <span className="mr-3">{getIcon(item.icon, "w-5 h-5")}</span>
                   {item.label}
-                </a>
+                </Link>
               );
             })}
           </div>

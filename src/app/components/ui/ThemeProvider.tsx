@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 
 type Theme = 'dark' | 'light' | 'system'
 
@@ -70,16 +70,21 @@ export function ThemeProvider({
     }
   }, [theme, mounted])
 
-  const setAccentColor = (color: string) => {
+  const setAccentColor = useCallback((color: string) => {
     if (typeof window !== 'undefined') {
       const root = window.document.documentElement
       root.style.setProperty('--accent-color', color)
       localStorage.setItem('portfolio-accent-color', color)
     }
-  }
+  }, [])
+
+  const handleSetTheme = useCallback((newTheme: Theme) => {
+    localStorage.setItem(storageKey, newTheme)
+    setTheme(newTheme)
+  }, [storageKey])
 
   // Apply theme from settings without overwriting user's manual choice
-  const applyThemeFromSettings = (settingsTheme: Theme, accentColor?: string) => {
+  const applyThemeFromSettings = useCallback((settingsTheme: Theme, accentColor?: string) => {
     // Only apply settings theme if user hasn't manually set a preference
     const userTheme = localStorage.getItem(storageKey) as Theme
     if (!userTheme) {
@@ -91,17 +96,15 @@ export function ThemeProvider({
     if (accentColor) {
       setAccentColor(accentColor)
     }
-  }
+  }, [storageKey, setAccentColor])
 
-  const value = {
+  // Memoize context value to prevent unnecessary consumer re-renders
+  const value = useMemo(() => ({
     theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme)
-      setTheme(theme)
-    },
+    setTheme: handleSetTheme,
     setAccentColor,
     applyThemeFromSettings,
-  }
+  }), [theme, handleSetTheme, setAccentColor, applyThemeFromSettings])
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>

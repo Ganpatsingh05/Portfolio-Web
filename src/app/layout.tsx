@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/app/components/ui/ThemeProvider";
 import { ThemeScript } from "@/app/components/ui/ThemeScript";
+import { GlobalLoadingProvider } from "@/app/components/ui/GlobalLoadingProvider";
+import { ToastProvider } from "@/app/admin/components/Toast";
 import { QueryProvider } from "@/lib/QueryProvider";
 import "./globals.css";
 
@@ -60,7 +62,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <ThemeScript />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -73,11 +74,6 @@ export default function RootLayout({
         {/* DNS Prefetching for backend */}
         <link rel="dns-prefetch" href="https://portfolio-web-gsr.onrender.com" />
         
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/gslogo.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/gslogo.png" />
-        <link rel="apple-touch-icon" href="/gslogo.png" />
-        <link rel="shortcut icon" href="/favicon.ico" />
       </head>
       <body
         className="antialiased bg-white dark:bg-gray-900"
@@ -86,12 +82,16 @@ export default function RootLayout({
         }}
       >
         <QueryProvider>
-          <ThemeProvider
-            defaultTheme="light"
-            storageKey="portfolio-theme"
-          >
-            {children}
-          </ThemeProvider>
+          <ToastProvider>
+            <ThemeProvider
+              defaultTheme="light"
+              storageKey="portfolio-theme"
+            >
+              <GlobalLoadingProvider>
+                {children}
+              </GlobalLoadingProvider>
+            </ThemeProvider>
+          </ToastProvider>
         </QueryProvider>
       </body>
     </html>

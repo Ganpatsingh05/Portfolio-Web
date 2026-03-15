@@ -11,18 +11,26 @@ export default function Navigation() {
 
   const navItems = [
     { name: 'About', href: '#about', icon: '👤' },
+    { name: 'Skills', href: '#skills', icon: '⚡' },
     { name: 'Projects', href: '#projects', icon: '💼' },
     { name: 'Experience', href: '#experience', icon: '🎯' },
-    { name: 'Skills', href: '#skills', icon: '⚡' },
+    { name: 'Certificates', href: '#certificates', icon: '📜' },
     { name: 'Contact', href: '#contact', icon: '✉️' }
   ]
 
   useEffect(() => {
+    let ticking = false
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 50)
+          ticking = false
+        })
+        ticking = true
+      }
     }
 
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
@@ -100,11 +108,9 @@ export default function Navigation() {
                 alt="GS Logo"
                 className="h-14 w-auto transition-all duration-300 group-hover:drop-shadow-lg"
                 onError={(e) => {
-                  console.error('Logo failed to load:', e);
                   // Fallback to text if image fails
                   e.currentTarget.style.display = 'none';
                 }}
-                onLoad={() => {/* Image loaded */}}
               />
               {/* Glow effect on hover */}
               <motion.div

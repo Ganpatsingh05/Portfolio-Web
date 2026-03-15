@@ -1,17 +1,12 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import { FaGithub, FaLinkedin, FaComments, FaTwitter, FaInstagram, FaGlobe, FaEnvelope } from 'react-icons/fa'
 import { SiLeetcode } from 'react-icons/si'
 import AdvancedTyping from '../animations/AdvancedTyping'
-import LottieAnimation from '../animations/LottieAnimation'
-import WebGLErrorBoundary from '../error/WebGLErrorBoundary'
 import { scrollToSection, openSocialLink } from '../../utils/actions'
 import { useHero } from '@/lib/hooks'
-
-// Dynamic imports to prevent SSR issues with 3D components
-const FloatingShape = dynamic(() => import('../3d/FloatingShape'), { ssr: false })
 
 export default function Hero() {
   const { data: heroData, isLoading } = useHero()
@@ -46,7 +41,7 @@ export default function Hero() {
 
   if (isLoading) {
     return (
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 pt-16 sm:pt-20">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 pt-8 sm:pt-12">
         <div className="animate-pulse space-y-6 px-4 w-full max-w-md">
           <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
           <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
@@ -62,7 +57,7 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 pt-16 sm:pt-20 pb-8">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 pt-8 sm:pt-12 pb-8">
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left Content */}
@@ -86,13 +81,9 @@ export default function Hero() {
                 transition={{ duration: 0.4, delay: 0.2 }}
                 className="flex items-center justify-center lg:justify-start gap-2"
               >
-                <motion.div
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="text-xl sm:text-2xl"
-                >
+                <div className="text-xl sm:text-2xl animate-wave">
                   👋
-                </motion.div>
+                </div>
                 <span className="text-lg sm:text-xl md:text-2xl font-medium" style={{ color: 'var(--accent-color)' }}>
                   {heroData?.greeting || "Hello, I'm"}
                 </span>
@@ -199,36 +190,26 @@ export default function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* Right Content - 3D Visual */}
+          {/* Right Content - Hero Image */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             className="relative order-first lg:order-last"
           >
-            {/* Show Lottie on mobile/tablet for better performance */}
-            <div className="flex justify-center">
-              <div className="lg:hidden">
-                <LottieAnimation 
-                  fallbackAnimation="rocket"
-                  className="w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80"
-                />
-              </div>
-              <div className="hidden lg:block">
-                <WebGLErrorBoundary
-                  fallback={
-                    <div className="w-full h-96 flex items-center justify-center">
-                      <LottieAnimation 
-                        fallbackAnimation="rocket"
-                        className="w-80 h-80"
-                      />
-                    </div>
-                  }
-                >
-                  <FloatingShape className="w-full h-96" />
-                </WebGLErrorBoundary>
-              </div>
-            </div>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-8 bg-gradient-to-br from-orange-500/30 via-amber-400/25 to-yellow-400/20 dark:from-orange-400/25 dark:via-amber-400/20 dark:to-yellow-400/15 blur-3xl"
+            />
+            <Image
+              src="/gsr_img2.png"
+              alt={heroData?.name || 'Ganpat Singh'}
+              width={900}
+              height={1200}
+              priority
+              className="relative z-10 w-full h-auto scale-105"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
           </motion.div>
         </div>
 

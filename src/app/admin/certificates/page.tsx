@@ -15,9 +15,10 @@ interface Certificate {
   description?: string;
   image_url?: string;
   timeline?: string;
+  visible?: boolean;
 }
 
-const emptyForm = { title: '', issuer: '', issue_date: '', credential_id: '', credential_url: '', description: '', image_url: '', timeline: '' };
+const emptyForm = { title: '', issuer: '', issue_date: '', credential_id: '', credential_url: '', description: '', image_url: '', timeline: '', visible: true };
 
 export default function CertificatesPage() {
   const router = useRouter();
@@ -72,6 +73,7 @@ export default function CertificatesPage() {
       description: c.description || '',
       image_url: c.image_url || '',
       timeline: c.timeline || '',
+      visible: c.visible !== false,
     });
     setImagePreview(c.image_url || null);
     setShowForm(true);
@@ -108,7 +110,7 @@ export default function CertificatesPage() {
     setFormError(null);
     if (!form.title.trim()) { setFormError('Title is required'); return; }
     if (!form.issuer.trim()) { setFormError('Issuer is required'); return; }
-    
+
     const payload: Record<string, any> = { title: form.title, issuer: form.issuer };
     if (form.issue_date) payload.issue_date = form.issue_date;
     if (form.credential_id) payload.credential_id = form.credential_id;
@@ -116,6 +118,7 @@ export default function CertificatesPage() {
     if (form.description) payload.description = form.description;
     payload.image_url = form.image_url || null;
     payload.timeline = form.timeline || null;
+    payload.visible = form.visible !== false;
 
     setSaving(true);
     try {
@@ -215,17 +218,46 @@ export default function CertificatesPage() {
               )}
               <div className="p-5">
               <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg shrink-0">
                     <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                     </svg>
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-gray-900 dark:text-white truncate">{c.title}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{c.issuer}</p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 break-words">{c.title}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{c.issuer}</p>
                   </div>
                 </div>
+                {/* Visibility Toggle */}
+                <button
+                  onClick={async () => {
+                    try {
+                      await adminApi.certificates.update(c.id, { visible: !c.visible });
+                      load();
+                      toast.success('Updated!', `Certificate ${c.visible ? 'hidden' : 'visible'}`);
+                    } catch (e: any) {
+                      toast.error('Failed', e.message || 'Failed to update visibility');
+                    }
+                  }}
+                  className={`p-1.5 rounded-lg transition shrink-0 ${
+                    c.visible !== false
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                  title={c.visible !== false ? 'Visible (click to hide)' : 'Hidden (click to show)'}
+                >
+                  {c.visible !== false ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  )}
+                </button>
               </div>
 
               {c.issue_date && (

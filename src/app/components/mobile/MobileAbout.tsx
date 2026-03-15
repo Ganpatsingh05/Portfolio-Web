@@ -2,11 +2,11 @@
 
 import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
-import { FaRocket, FaTools, FaRobot, FaCloud, FaDownload, FaComments, FaClock } from 'react-icons/fa'
+import { FaRocket, FaRobot, FaDownload, FaComments, FaClock } from 'react-icons/fa'
 import { BsLightning, BsEmojiSmile } from 'react-icons/bs'
+import { BiTargetLock } from 'react-icons/bi'
 import { SiReact, SiNodedotjs } from 'react-icons/si'
 import { HiOutlineHand } from 'react-icons/hi'
-import { BiTargetLock } from 'react-icons/bi'
 import { downloadResume, scrollToSection } from '../../utils/actions'
 
 // Dynamic import for Lottie animation
@@ -18,27 +18,6 @@ export default function MobileAbout() {
     { number: "15+", label: "Projects Completed", icon: FaRocket },
     { number: "15+", label: "Technologies", icon: BsLightning },
     { number: "100%", label: "Client Satisfaction", icon: BsEmojiSmile }
-  ]
-
-  const highlights = [
-    { 
-      title: "Full Stack Development", 
-      description: "Building end-to-end web applications with modern frameworks",
-      icon: FaTools,
-      tech: ["React", "Node.js", "TypeScript", "Next.js"]
-    },
-    { 
-      title: "AI & Machine Learning", 
-      description: "Implementing intelligent solutions and data-driven applications",
-      icon: FaRobot,
-      tech: ["Python", "TensorFlow", "PyTorch", "Scikit-learn"]
-    },
-    { 
-      title: "Cloud & DevOps", 
-      description: "Deploying scalable applications with modern cloud infrastructure",
-      icon: FaCloud,
-      tech: ["AWS", "Docker", "Kubernetes", "CI/CD"]
-    }
   ]
 
   return (
@@ -227,63 +206,6 @@ export default function MobileAbout() {
               </motion.div>
             )
           })}
-        </motion.div>
-
-        {/* Highlights Section - Mobile Stack */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-        >
-          <h3 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
-            What I Do Best
-          </h3>
-          
-          <div className="space-y-4">
-            {highlights.map((highlight, index) => {
-              const IconComponent = highlight.icon
-              return (
-                <motion.div
-                  key={highlight.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.02 }}
-                  className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-700 transition-all duration-300"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-3xl text-blue-600 dark:text-blue-400 flex-shrink-0">
-                      <IconComponent />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                        {highlight.title}
-                      </h4>
-                      <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm leading-relaxed">
-                        {highlight.description}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {highlight.tech.map((tech, techIndex) => (
-                          <motion.span
-                            key={tech}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.3, delay: techIndex * 0.05 }}
-                            viewport={{ once: true }}
-                            className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-medium"
-                          >
-                            {tech}
-                          </motion.span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )
-            })}
-          </div>
         </motion.div>
       </div>
     </section>

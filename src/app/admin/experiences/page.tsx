@@ -5,7 +5,7 @@ import { adminApi, ensureAuthedClient } from '@/app/lib/admin/api';
 import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmModal';
 
-interface Experience { id: string; title: string; company: string; period: string; type: 'experience' | 'education'; description?: string | string[]; created_at: string; }
+interface Experience { id: string; title: string; company: string; period: string; type: 'experience' | 'education'; description?: string | string[]; start_date?: string; end_date?: string; created_at: string; }
 
 export default function ExperiencesPage() {
   const router = useRouter();
@@ -14,7 +14,7 @@ export default function ExperiencesPage() {
   const [items, setItems] = useState<Experience[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Experience | null>(null);
-  const [form, setForm] = useState({ title: '', company: '', period: '', type: 'experience', description: '' });
+  const [form, setForm] = useState({ title: '', company: '', period: '', type: 'experience', description: '', start_date: '', end_date: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,11 +23,11 @@ export default function ExperiencesPage() {
   const load = async () => { try { setItems(await adminApi.experiences.list()); } catch(e:any){ if(e.status===401){router.replace('/admin/login');return;} setError(e.message);} finally{ setLoading(false);} };
   useEffect(()=>{ if(!ensureAuthedClient()){ router.replace('/admin/login'); return;} load(); },[router]);
 
-  const startAdd = () => { setEditing(null); setForm({ title:'', company:'', period:'', type:'experience', description:'' }); setShowForm(true); };
-  const startEdit = (x: Experience) => { setEditing(x); setForm({ title:x.title, company:x.company, period:x.period, type:x.type, description: Array.isArray(x.description) ? x.description.join('\n') : (x.description||'') }); setShowForm(true); };
+  const startAdd = () => { setEditing(null); setForm({ title:'', company:'', period:'', type:'experience', description:'', start_date:'', end_date:'' }); setShowForm(true); };
+  const startEdit = (x: Experience) => { setEditing(x); setForm({ title:x.title, company:x.company, period:x.period, type:x.type, description: Array.isArray(x.description) ? x.description.join('\n') : (x.description||''), start_date: x.start_date || '', end_date: x.end_date || '' }); setShowForm(true); };
 
   const save = async () => {
-    const payload = { ...form, description: form.description.split('\n').map(l=>l.trim()).filter(Boolean) };
+    const payload = { ...form, description: form.description.split('\n').map(l=>l.trim()).filter(Boolean), start_date: form.start_date || null, end_date: form.end_date || null };
     setSaving(true);
     try { 
       if(editing) await adminApi.experiences.update(editing.id, payload); 
@@ -82,8 +82,14 @@ export default function ExperiencesPage() {
     </div>
   );
 
-  const workExperiences = items.filter(e => e.type === 'experience');
-  const education = items.filter(e => e.type === 'education');
+  const sortNewestFirst = (arr: Experience[]) => [...arr].sort((a, b) => {
+    const dateA = a.start_date || a.created_at || '';
+    const dateB = b.start_date || b.created_at || '';
+    return dateB.localeCompare(dateA);
+  });
+
+  const workExperiences = sortNewestFirst(items.filter(e => e.type === 'experience'));
+  const education = sortNewestFirst(items.filter(e => e.type === 'education'));
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -310,6 +316,26 @@ export default function ExperiencesPage() {
                     onChange={e => setForm(f => ({...f, period: e.target.value}))} 
                     required 
                     placeholder="Jan 2024 - Present"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 px-3 py-2.5 text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition" 
+                  />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Start Date</label>
+                  <input 
+                    type="date"
+                    value={form.start_date} 
+                    onChange={e => setForm(f => ({...f, start_date: e.target.value}))} 
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 px-3 py-2.5 text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">End Date <span className="text-gray-400 font-normal">(leave empty if current)</span></label>
+                  <input 
+                    type="date"
+                    value={form.end_date} 
+                    onChange={e => setForm(f => ({...f, end_date: e.target.value}))} 
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 px-3 py-2.5 text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition" 
                   />
                 </div>

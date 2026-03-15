@@ -27,7 +27,14 @@ interface ExperienceItem {
 }
 
 export default function Experience() {
-  const { data: experiences = [], isLoading } = useExperiences()
+  const { data: rawExperiences = [], isLoading } = useExperiences()
+
+  // Sort newest first by start_date, fallback to created_at
+  const experiences = [...rawExperiences].sort((a: ExperienceItem, b: ExperienceItem) => {
+    const dateA = a.start_date || a.created_at || ''
+    const dateB = b.start_date || b.created_at || ''
+    return dateB.localeCompare(dateA)
+  })
 
   if (isLoading) {
     return (
@@ -53,7 +60,7 @@ export default function Experience() {
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.5 }}
             viewport={{ once: true }}
             className="text-center lg:text-left"
           >
@@ -103,7 +110,7 @@ export default function Experience() {
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
             viewport={{ once: true }}
             className="flex justify-center lg:justify-end"
           >
@@ -114,52 +121,23 @@ export default function Experience() {
               />
               
               {/* Floating badges */}
-              <motion.div
-                animate={{ 
-                  y: [0, -10, 0],
-                  rotate: [0, 5, 0]
-                }}
-                transition={{ 
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-                className="absolute top-10 -left-5 bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-sm font-semibold shadow-lg"
+              <div
+                className="absolute top-10 -left-5 bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-sm font-semibold shadow-lg animate-float-1"
               >
                 💼 Work
-              </motion.div>
+              </div>
               
-              <motion.div
-                animate={{ 
-                  y: [0, 10, 0],
-                  rotate: [0, -5, 0]
-                }}
-                transition={{ 
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1
-                }}
-                className="absolute top-1/2 -right-5 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 px-3 py-1 rounded-full text-sm font-semibold shadow-lg"
+              <div
+                className="absolute top-1/2 -right-5 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 px-3 py-1 rounded-full text-sm font-semibold shadow-lg animate-float-2"
               >
                 🎓 Education
-              </motion.div>
+              </div>
               
-              <motion.div
-                animate={{ 
-                  y: [0, -15, 0],
-                  rotate: [0, 3, 0]
-                }}
-                transition={{ 
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 2
-                }}
-                className="absolute bottom-20 -left-8 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 px-3 py-1 rounded-full text-sm font-semibold shadow-lg"
+              <div
+                className="absolute bottom-20 -left-8 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 px-3 py-1 rounded-full text-sm font-semibold shadow-lg animate-float-3"
               >
                 🚀 Growth
-              </motion.div>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -172,9 +150,9 @@ export default function Experience() {
           {experiences.map((item: ExperienceItem, index: number) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: index * 0.2 }}
+              transition={{ duration: 0.5, delay: Math.min(index * 0.1, 0.4) }}
               viewport={{ once: true }}
               className={`relative mb-16 ${
                 index % 2 === 0 ? 'md:text-right md:pr-8' : 'md:text-left md:pl-8'
@@ -203,8 +181,6 @@ export default function Experience() {
                 className={`ml-16 md:ml-0 ${
                   index % 2 === 0 ? 'md:mr-16' : 'md:ml-16'
                 }`}
-                whileHover={{ scale: 1.02, y: -5 }}
-                transition={{ duration: 0.3 }}
               >
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 border border-orange-100 dark:border-orange-800/30">
                   {/* Header */}

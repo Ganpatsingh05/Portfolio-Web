@@ -21,7 +21,38 @@ interface ToastContextType {
   info: (title: string, message?: string) => void;
 }
 
+interface ToastPayload {
+  type: ToastType;
+  title: string;
+  message?: string;
+  duration?: number;
+}
+
 const ToastContext = createContext<ToastContextType | null>(null);
+const toastListeners = new Set<(toast: ToastPayload) => void>();
+
+function emitToast(type: ToastType, title: string, message?: string, duration?: number) {
+  const payload = { type, title, message, duration };
+  toastListeners.forEach((listener) => listener(payload));
+}
+
+export const toast = {
+  showToast: (type: ToastType, title: string, message?: string, duration?: number) => {
+    emitToast(type, title, message, duration);
+  },
+  success: (title: string, message?: string, duration?: number) => {
+    emitToast('success', title, message, duration);
+  },
+  error: (title: string, message?: string, duration?: number) => {
+    emitToast('error', title, message, duration);
+  },
+  warning: (title: string, message?: string, duration?: number) => {
+    emitToast('warning', title, message, duration);
+  },
+  info: (title: string, message?: string, duration?: number) => {
+    emitToast('info', title, message, duration);
+  },
+};
 
 export function useToast() {
   const context = useContext(ToastContext);
@@ -114,10 +145,21 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const showToast = useCallback((type: ToastType, title: string, message?: string, duration?: number) => {
+  const addToast = useCallback((toastData: ToastPayload) => {
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, type, title, message, duration }]);
+    setToasts((prev) => [...prev, { id, ...toastData }]);
   }, []);
+
+  useEffect(() => {
+    toastListeners.add(addToast);
+    return () => {
+      toastListeners.delete(addToast);
+    };
+  }, [addToast]);
+
+  const showToast = useCallback((type: ToastType, title: string, message?: string, duration?: number) => {
+    addToast({ type, title, message, duration });
+  }, [addToast]);
 
   const success = useCallback((title: string, message?: string) => showToast('success', title, message), [showToast]);
   const error = useCallback((title: string, message?: string) => showToast('error', title, message), [showToast]);

@@ -13,10 +13,11 @@ function AnimatedSphere() {
       meshRef.current.rotation.x = state.clock.elapsedTime * 0.1
       meshRef.current.rotation.y = state.clock.elapsedTime * 0.15
     }
+    state.invalidate()
   })
 
   return (
-    <Sphere ref={meshRef} args={[1, 64, 128]} scale={2.5}>
+    <Sphere ref={meshRef} args={[1, 32, 64]} scale={2.5}>
       <MeshDistortMaterial
         color="#3b82f6"
         distort={0.3}
@@ -70,10 +71,11 @@ export default function FloatingShape({ className = "w-96 h-96" }: FloatingShape
       <Suspense fallback={<CSSFallback className={className} />}>
         <Canvas
           dpr={[1, 1.5]}
+          frameloop="demand"
           gl={{
             antialias: false,
             alpha: true,
-            powerPreference: "default"
+            powerPreference: "low-power"
           }}
         >
           <ambientLight intensity={0.5} />

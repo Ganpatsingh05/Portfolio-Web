@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import AdvancedTyping from '../animations/AdvancedTyping'
-import { openSocialLink, scrollToSection, downloadResume } from '../../utils/actions'
+import { openSocialLink, scrollToSection } from '../../utils/actions'
 
 export default function MobileHero() {
   const [isVisible, setIsVisible] = useState(false)

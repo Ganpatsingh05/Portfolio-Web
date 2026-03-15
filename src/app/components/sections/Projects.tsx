@@ -21,6 +21,7 @@ interface Project {
   start_date?: string
   end_date?: string
   timeline?: string
+  created_at?: string
 }
 
 export default function Projects() {
@@ -186,14 +187,18 @@ export default function Projects() {
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 line-clamp-2">{project.description}</p>
 
                 {/* Timeline */}
-                {project.timeline && (
-                  <div className="flex items-center gap-1.5 mb-3 sm:mb-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                    <svg className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{project.timeline}</span>
-                  </div>
-                )}
+                {(() => {
+                  const timelineText = project.timeline
+                    || (project.created_at && new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }))
+                  return timelineText ? (
+                    <div className="flex items-center gap-1.5 mb-3 sm:mb-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      <svg className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>{timelineText}</span>
+                    </div>
+                  ) : null
+                })()}
                 
                 {/* Technologies */}
                 <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-6">

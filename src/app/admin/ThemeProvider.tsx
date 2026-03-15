@@ -85,25 +85,22 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
     setMounted(true);
   }, [resolveThemeValue, applyThemeToDOM]);
 
-  // Sync theme on route changes - re-apply on every navigation
+  // Sync theme on route changes
   useEffect(() => {
     if (!mounted) return;
 
-    // Re-apply theme on every render to handle navigation
     const storedTheme = (localStorage.getItem(THEME_KEY) as Theme) || 'light';
     const resolved = resolveThemeValue(storedTheme);
     
-    // Always apply to DOM
     applyThemeToDOM(resolved);
     
-    // Update state if needed
     if (theme !== storedTheme) {
       setThemeState(storedTheme);
     }
     if (resolvedTheme !== resolved) {
       setResolvedTheme(resolved);
     }
-  });
+  }, [mounted, theme, resolvedTheme, resolveThemeValue, applyThemeToDOM]);
 
   // Listen for storage changes (cross-tab sync)
   useEffect(() => {

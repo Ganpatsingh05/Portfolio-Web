@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { adminApi, ensureAuthedClient } from '@/app/lib/admin/api';
 import { useRouter } from 'next/navigation';
 import { useToast } from '../components/Toast';
@@ -339,7 +339,7 @@ export default function HeroPage() {
               type="text"
               value={newTypingText}
               onChange={e => setNewTypingText(e.target.value)}
-              onKeyPress={e => e.key === 'Enter' && addTypingText()}
+              onKeyDown={e => e.key === 'Enter' && addTypingText()}
               maxLength={50}
               placeholder="Add new typing text..."
               className="flex-1 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 transition"

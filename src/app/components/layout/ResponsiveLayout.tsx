@@ -16,6 +16,7 @@ const About = dynamic(() => import('../sections/About'))
 const Projects = dynamic(() => import('../sections/Projects'))
 const Experience = dynamic(() => import('../sections/Experience'))
 const Skills = dynamic(() => import('../sections/Skills'))
+const Certificates = dynamic(() => import('../sections/Certificates'))
 const Contact = dynamic(() => import('../sections/Contact'))
 
 // Mobile components
@@ -58,13 +59,20 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
   // Detect mobile immediately (synchronous)
   useEffect(() => {
+    let resizeTimer: ReturnType<typeof setTimeout>
     const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768)
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(() => {
+        setIsMobile(window.innerWidth < 768)
+      }, 150)
     }
 
-    checkScreenSize()
-    window.addEventListener('resize', checkScreenSize)
-    return () => window.removeEventListener('resize', checkScreenSize)
+    setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', checkScreenSize, { passive: true })
+    return () => {
+      window.removeEventListener('resize', checkScreenSize)
+      clearTimeout(resizeTimer)
+    }
   }, [])
 
   // Fetch settings asynchronously without blocking render
@@ -146,7 +154,8 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
           <div className="relative w-48 h-48 mx-auto mb-8">
             {/* Large gear */}
             <svg 
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 text-blue-400 animate-spin-slow"
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 text-blue-400"
+              style={{ animation: 'spin 8s linear infinite' }}
               viewBox="0 0 24 24" 
               fill="currentColor"
             >
@@ -155,7 +164,8 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
             
             {/* Small gear 1 */}
             <svg 
-              className="absolute bottom-2 left-4 w-16 h-16 text-cyan-400 animate-spin-reverse"
+              className="absolute bottom-2 left-4 w-16 h-16 text-cyan-400"
+              style={{ animation: 'spin 6s linear infinite reverse' }}
               viewBox="0 0 24 24" 
               fill="currentColor"
             >
@@ -164,7 +174,8 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
             
             {/* Small gear 2 */}
             <svg 
-              className="absolute bottom-4 right-4 w-12 h-12 text-indigo-400 animate-spin-slow"
+              className="absolute bottom-4 right-4 w-12 h-12 text-indigo-400"
+              style={{ animation: 'spin 8s linear infinite' }}
               viewBox="0 0 24 24" 
               fill="currentColor"
             >
@@ -204,46 +215,6 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
             <span className="text-sm ml-2">Working on it</span>
           </div>
         </div>
-
-        {/* Custom styles for animations */}
-        <style jsx>{`
-          @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
-            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; }
-          }
-          @keyframes spin-slow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          @keyframes spin-reverse {
-            from { transform: rotate(360deg); }
-            to { transform: rotate(0deg); }
-          }
-          @keyframes bounce-slow {
-            0%, 100% { transform: translate(-50%, -50%) rotate(-15deg); }
-            50% { transform: translate(-50%, -60%) rotate(15deg); }
-          }
-          @keyframes fade-in {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          .animate-spin-slow {
-            animation: spin-slow 8s linear infinite;
-          }
-          .animate-spin-reverse {
-            animation: spin-reverse 6s linear infinite;
-          }
-          .animate-bounce-slow {
-            animation: bounce-slow 2s ease-in-out infinite;
-          }
-          .animate-fade-in {
-            animation: fade-in 0.8s ease-out forwards;
-          }
-          .animate-fade-in-delay {
-            animation: fade-in 0.8s ease-out 0.2s forwards;
-            opacity: 0;
-          }
-        `}</style>
       </div>
     )
   }
@@ -257,9 +228,10 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
       {isVisible('about') && (isMobile ? <MobileAbout /> : <About />)}
       
       {/* Shared Components - Same for both mobile and desktop */}
+      {isVisible('skills') && <Skills />}
       {isVisible('projects') && <Projects />}
       {isVisible('experience') && <Experience />}
-      {isVisible('skills') && <Skills />}
+      <Certificates />
       {isVisible('contact') && <Contact />}
       
       {/* Footer - Same for both mobile and desktop */}

@@ -1,13 +1,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
 import { 
-  FaTwitter, 
   FaLinkedin, 
   FaGithub, 
   FaHeart, 
-  FaCode, 
   FaRocket,
   FaEnvelope,
   FaMapMarkerAlt,
@@ -15,35 +12,11 @@ import {
 } from 'react-icons/fa'
 import { SiLeetcode } from 'react-icons/si'
 import { openSocialLink, scrollToSection, openEmail } from '../../utils/actions'
-import { api } from '@/lib/api'
-
-interface PersonalInfo {
-  name?: string
-  title?: string
-  email?: string
-  location?: string
-  bio?: string
-  footer_bio?: string
-  github_url?: string
-  linkedin_url?: string
-  leetcode_url?: string
-}
+import { usePersonalInfo } from '@/lib/hooks'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
-  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({})
-
-  useEffect(() => {
-    const fetchPersonalInfo = async () => {
-      try {
-        const data = await api.getPersonalInfo()
-        setPersonalInfo(data)
-      } catch (err) {
-        console.error('Error fetching personal info:', err)
-      }
-    }
-    fetchPersonalInfo()
-  }, [])
+  const { data: personalInfo = {} } = usePersonalInfo()
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })

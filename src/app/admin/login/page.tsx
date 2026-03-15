@@ -16,7 +16,6 @@ export default function AdminLoginPage() {
     setLoading(true); setError(null);
     try {
       const res = await adminApi.login(email, password);
-      console.log("Reponse from backend: ",res);
       if (typeof window !== 'undefined') localStorage.setItem('adminToken', res.token);
       router.push('/admin');
     } catch (err: any) {

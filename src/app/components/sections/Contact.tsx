@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { 
   FaEnvelope, 
   FaMapMarkerAlt, 
@@ -19,19 +19,12 @@ import {
 } from 'react-icons/fa'
 import { SiLeetcode } from 'react-icons/si'
 import { submitContactForm, downloadResume, openSocialLink, openEmail } from '../../utils/actions'
-import { api, fallbackData } from '@/lib/api'
-
-interface PersonalInfo {
-  email?: string
-  location?: string
-  github_url?: string
-  linkedin_url?: string
-  leetcode_url?: string
-  resume_url?: string
-}
+import { useToast } from '@/app/admin/components/Toast'
+import { usePersonalInfo } from '@/lib/hooks'
 
 export default function Contact() {
-  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({})
+  const { data: personalInfo = {} } = usePersonalInfo()
+  const toast = useToast()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -41,18 +34,6 @@ export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [emailError, setEmailError] = useState('')
   const [emailValid, setEmailValid] = useState(false)
-
-  useEffect(() => {
-    const fetchPersonalInfo = async () => {
-      try {
-        const data = await api.getPersonalInfo()
-        setPersonalInfo(data)
-      } catch (err) {
-        console.error('Error fetching personal info:', err)
-      }
-    }
-    fetchPersonalInfo()
-  }, [])
 
   // List of common disposable/temporary email domains to block
   const disposableEmailDomains = [
@@ -113,13 +94,13 @@ export default function Contact() {
       const result = await submitContactForm(formData)
       
       if (result.success) {
-        alert(result.message)
+        toast.success('Message Sent!', result.message)
         setFormData({ name: '', email: '', subject: '', message: '' })
       } else {
-        alert(result.message)
+        toast.error('Failed to Send', result.message)
       }
     } catch (error) {
-      alert('Failed to send message. Please try again or contact me directly.')
+      toast.error('Something went wrong', 'Failed to send message. Please try again or contact me directly.')
     } finally {
       setIsSubmitting(false)
     }
@@ -143,7 +124,7 @@ export default function Contact() {
 
   return (
     <section
-      className="py-14 sm:py-16 md:py-20 relative overflow-hidden overflow-x-hidden bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:via-orange-900/20 dark:to-gray-900 text-gray-900 dark:text-white"
+      className="py-14 sm:py-16 md:py-20 relative overflow-hidden overflow-x-hidden bg-white dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-white"
       id="contact"
     >
       {/* Background Elements */}
@@ -346,8 +327,8 @@ export default function Contact() {
             className="space-y-4 sm:space-y-6 lg:space-y-8"
           >
             <div className="rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 border backdrop-blur-sm bg-white/90 dark:bg-white/5 border-orange-200 dark:border-orange-500/20">
-              <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-3 sm:mb-4 lg:mb-6 text-gray-900 dark:text-gray-900 drop-shadow-sm">Get In Touch</h3>
-              <p className="text-gray-800 dark:text-gray-800 mb-4 sm:mb-6 lg:mb-8 leading-relaxed text-xs sm:text-sm lg:text-base drop-shadow-sm">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-3 sm:mb-4 lg:mb-6 text-gray-900 dark:text-white">Get In Touch</h3>
+              <p className="text-gray-800 dark:text-gray-300 mb-4 sm:mb-6 lg:mb-8 leading-relaxed text-xs sm:text-sm lg:text-base">
                 I'm always excited to work on new projects and collaborate with amazing people. 
                 Let's connect and make something incredible together!
               </p>
@@ -362,28 +343,27 @@ export default function Contact() {
                     <FaEnvelope className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-semibold text-orange-700 dark:text-orange-800 text-xs sm:text-sm lg:text-base drop-shadow-sm">Email</h4>
-                    <p className="text-gray-800 dark:text-gray-900 text-xs sm:text-sm lg:text-base drop-shadow-sm truncate">{personalInfo.email || 'ganpatsingh.tech@gmail.com'}</p>
+                    <h4 className="font-semibold text-orange-700 dark:text-orange-400 text-xs sm:text-sm lg:text-base">Email</h4>
+                    <p className="text-gray-800 dark:text-gray-300 text-xs sm:text-sm lg:text-base truncate">{personalInfo.email || 'ganpatsingh.tech@gmail.com'}</p>
                   </div>
                 </motion.div>
 
-                <motion.div 
-                  whileHover={{ x: 5 }}
+                <div 
                   className="flex items-center space-x-4 group"
                 >
                   <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center group-hover:shadow-lg group-hover:shadow-orange-500/25 transition-all duration-300">
                     <FaMapMarkerAlt className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-orange-700 dark:text-orange-800 group-hover:text-orange-600 dark:group-hover:text-orange-700 transition-colors text-sm sm:text-base drop-shadow-sm">Location</h4>
-                    <p className="text-gray-800 dark:text-gray-900 group-hover:text-gray-900 dark:group-hover:text-black transition-colors text-sm sm:text-base drop-shadow-sm">{personalInfo.location || 'Available Worldwide (Remote)'}</p>
+                    <h4 className="font-semibold text-orange-700 dark:text-orange-400 group-hover:text-orange-600 dark:group-hover:text-orange-300 transition-colors text-sm sm:text-base">Location</h4>
+                    <p className="text-gray-800 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors text-sm sm:text-base">{personalInfo.location || 'Available Worldwide (Remote)'}</p>
                   </div>
-                </motion.div>
+                </div>
               </div>
 
               {/* Social Links */}
               <div className="mt-8">
-                <h4 className="font-semibold mb-4 sm:mb-6 text-orange-700 dark:text-orange-800 text-base sm:text-lg drop-shadow-sm">Connect With Me</h4>
+                <h4 className="font-semibold mb-4 sm:mb-6 text-orange-700 dark:text-orange-400 text-base sm:text-lg">Connect With Me</h4>
                 <div className="flex space-x-3 sm:space-x-4">
                   {personalInfo.leetcode_url && (
                     <motion.button

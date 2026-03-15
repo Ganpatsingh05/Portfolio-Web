@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { adminApi } from '@/app/lib/admin/api';
 import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmModal';

@@ -16,6 +16,7 @@ interface Certificate {
   description?: string
   image_url?: string
   timeline?: string
+  visible?: boolean
 }
 
 export default function Certificates() {
@@ -85,7 +86,7 @@ export default function Certificates() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: Math.min(index * 0.08, 0.4) }}
               viewport={{ once: true }}
-              className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-800 rounded-xl shadow-md border border-orange-200 dark:border-gray-700 group hover:border-orange-400 dark:hover:border-orange-600 transition-colors overflow-hidden"
+              className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-800 rounded-xl shadow-md border border-orange-200 dark:border-gray-700 group hover:border-orange-400 dark:hover:border-orange-600 transition-colors overflow-hidden flex flex-col"
             >
               {/* Thumbnail */}
               {cert.image_url && (
@@ -103,52 +104,44 @@ export default function Certificates() {
                 </div>
               )}
 
-              <div className="p-5 sm:p-6">
-              {/* Certificate Icon & Title */}
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <FaAward className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <div className="p-5 sm:p-6 flex flex-col flex-1">
+              <div className="flex-1">
+                {/* Certificate Icon & Title */}
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <FaAward className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors leading-tight">
+                      {cert.title}
+                    </h3>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors leading-tight">
-                    {cert.title}
-                  </h3>
+
+                {/* Issuer */}
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <FaBuilding className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                  <span>{cert.issuer}</span>
                 </div>
+
+                {/* Timeline or Issue Date */}
+                {(cert.timeline || cert.issue_date) && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    <FaCalendarAlt className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
+                    <span>{cert.timeline || formatDate(cert.issue_date)}</span>
+                  </div>
+                )}
+
+                {/* Description */}
+                {cert.description && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                    {cert.description}
+                  </p>
+                )}
               </div>
 
-              {/* Issuer */}
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
-                <FaBuilding className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
-                <span>{cert.issuer}</span>
-              </div>
-
-              {/* Date */}
-              {cert.issue_date && (
-                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                  <FaCalendarAlt className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
-                  <span>{formatDate(cert.issue_date)}</span>
-                </div>
-              )}
-
-              {/* Timeline */}
-              {cert.timeline && (
-                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                  <svg className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{cert.timeline}</span>
-                </div>
-              )}
-
-              {/* Description */}
-              {cert.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                  {cert.description}
-                </p>
-              )}
-
-              {/* Credential ID & Link */}
-              <div className="flex items-center justify-between mt-auto pt-3 border-t border-orange-200/50 dark:border-gray-700">
+              {/* Credential ID & Link - Always at bottom */}
+              <div className="flex items-center justify-between pt-3 border-t border-orange-200/50 dark:border-gray-700 mt-auto">
                 {cert.credential_id && (
                   <span className="text-xs text-gray-500 dark:text-gray-500 truncate mr-2">
                     ID: {cert.credential_id}

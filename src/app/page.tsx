@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { useEffect, useState, Suspense } from 'react'
 import { api } from '@/lib/api'
 import { useTheme } from '@/app/components/ui/ThemeProvider'
+import { useGlobalLoading } from '@/app/components/ui/GlobalLoadingProvider'
 
 // Static imports for critical UI
 import Navigation from '@/app/components/ui/Navigation'
@@ -18,10 +19,6 @@ const ResponsiveLayout = dynamic(() => import('@/app/components/layout/Responsiv
   ssr: true, // Enable SSR for better SEO
 })
 
-const AOSInit = dynamic(() => import('@/app/components/animations/AOSInit'), {
-  ssr: false, // Animation library doesn't need SSR
-})
-
 interface SiteSettings {
   maintenance_mode: boolean
   show_navigation: boolean
@@ -32,6 +29,12 @@ interface SiteSettings {
 
 export default function Home() {
   const { applyThemeFromSettings } = useTheme()
+  const { setIsLoading, setLoadingProgress } = useGlobalLoading()
+  const zoomOutStyle = {
+    zoom: '90%',
+    width: '111.111111%',
+    marginLeft: '-5.555556%',
+  }
   const [settings, setSettings] = useState<SiteSettings>({
     maintenance_mode: false,
     show_navigation: true,
@@ -39,13 +42,26 @@ export default function Home() {
     default_theme: 'system',
     accent_color: '#3B82F6',
   })
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Defer settings fetch to not block initial render
-    const fetchSettings = async () => {
+    let showLoaderTimer: ReturnType<typeof setTimeout> | null = null
+    let done = false
+
+    const initializeApp = async () => {
+      // Only show the loader if data takes longer than 1s to arrive
+      showLoaderTimer = setTimeout(() => {
+        if (!done) {
+          setIsLoading(true)
+          setLoadingProgress(15)
+        }
+      }, 1000)
+
       try {
-        const data = await api.getSettings()
+        const [data, _hero] = await Promise.all([
+          api.getSettings().then(d => { if (!done) setLoadingProgress(50); return d }),
+          api.getHero().then(h => { if (!done) setLoadingProgress(75); return h }),
+        ])
+
         setSettings({
           maintenance_mode: data.maintenance_mode ?? false,
           show_navigation: data.show_navigation ?? true,
@@ -53,27 +69,23 @@ export default function Home() {
           default_theme: data.default_theme ?? 'system',
           accent_color: data.accent_color ?? '#3B82F6',
         })
-        
-        // Apply theme from settings
+
         applyThemeFromSettings(
           data.default_theme ?? 'system',
           data.accent_color ?? '#3B82F6'
         )
       } catch (error) {
-        // Log error but don't break the page - use default settings
-        console.warn('Failed to fetch settings, using defaults:', error)
+        console.warn('Failed to fetch initial data, using defaults:', error)
       } finally {
+        done = true
+        if (showLoaderTimer) clearTimeout(showLoaderTimer)
+        setLoadingProgress(100)
         setIsLoading(false)
       }
     }
-    
-    // Use requestIdleCallback to defer non-critical work
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => fetchSettings(), { timeout: 2000 })
-    } else {
-      setTimeout(fetchSettings, 0)
-    }
-    
+
+    initializeApp()
+
     // Track page view asynchronously
     if ('requestIdleCallback' in window) {
       requestIdleCallback(() => {
@@ -84,24 +96,23 @@ export default function Home() {
         api.trackEvent('page_view', { path: window.location.pathname })
       }, 100)
     }
-  }, [applyThemeFromSettings])
+  }, [applyThemeFromSettings, setIsLoading, setLoadingProgress])
 
   return (
-    <main className="min-h-screen bg-white dark:bg-gray-900">
-      {/* Show static navigation immediately */}
+    <main className="min-h-screen bg-white dark:bg-gray-900 overflow-x-hidden">
+      {/* Keep navigation outside scaled layer so fixed header remains sticky/fixed */}
       {settings.show_navigation && !settings.maintenance_mode && <Navigation />}
-      
-      {/* Load animations conditionally and defer */}
-      {settings.enable_animations && <AOSInit />}
-      
-      {/* Main content with suspense boundary */}
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-pulse text-gray-400">Loading...</div>
-        </div>
-      }>
-        <ResponsiveLayout />
-      </Suspense>
+
+      <div style={zoomOutStyle}>
+        {/* Main content with suspense boundary */}
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-pulse text-gray-400">Loading...</div>
+          </div>
+        }>
+          <ResponsiveLayout />
+        </Suspense>
+      </div>
     </main>
   )
 }
