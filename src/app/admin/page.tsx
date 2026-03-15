@@ -4,12 +4,24 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi, ensureAuthedClient } from '@/app/lib/admin/api';
 
-interface Stats { projects: number; skills: number; messages: number; pageViews: number; experiences?: number; }
+interface Stats { projects: number; skills: number; certificates?: number; messages: number; pageViews: number; experiences?: number; }
+interface WeeklyPoint { label: string; pageViews: number; messages: number }
+interface DashboardCharts {
+  projectsByCategory?: Record<string, number>
+  skillsByCategory?: Record<string, number>
+  weeklyTraffic?: WeeklyPoint[]
+}
+interface DashboardPayload {
+  stats: Stats
+  recentMessages?: any[]
+  charts?: DashboardCharts
+}
 
 export default function AdminHome() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentMessages, setRecentMessages] = useState<any[]>([]);
+  const [charts, setCharts] = useState<DashboardCharts>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,9 +32,10 @@ export default function AdminHome() {
     
     (async () => {
       try {
-        const dash = await adminApi.dashboard();
+        const dash: DashboardPayload = await adminApi.dashboard();
         setStats(dash.stats);
         setRecentMessages(dash.recentMessages || []);
+        setCharts(dash.charts || {});
       } catch (e: any) {
         console.error('Dashboard API error:', e);
         if (e.status === 401) { 
@@ -69,7 +82,7 @@ export default function AdminHome() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-6">
         <StatCard 
           label="Projects" 
           value={stats?.projects ?? 0} 
@@ -91,6 +104,17 @@ export default function AdminHome() {
           }
           color="green"
           href="/admin/skills"
+        />
+        <StatCard 
+          label="Certificates" 
+          value={stats?.certificates ?? 0} 
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.592 3.824 10.29 9 11.622C17.176 19.29 21 14.592 21 9c0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          }
+          color="orange"
+          href="/admin/certificates"
         />
         <StatCard 
           label="Messages" 
@@ -116,50 +140,36 @@ export default function AdminHome() {
         />
       </div>
 
-      {/* Quick Actions */}
+      {/* Insights */}
       <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6m4 6V7m4 10V4M3 19h18" />
             </svg>
-            Quick Actions
+            Insights
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage your portfolio content</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Live charts based on your dashboard data</p>
         </div>
-        <div className="p-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            <QuickActionCard href="/admin/hero" label="Hero Section" icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-            } />
-            <QuickActionCard href="/admin/personal" label="Personal Info" icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            } />
-            <QuickActionCard href="/admin/projects" label="Projects" icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            } />
-            <QuickActionCard href="/admin/skills" label="Skills" icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            } />
-            <QuickActionCard href="/admin/experiences" label="Experiences" icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            } />
-            <QuickActionCard href="/admin/settings" label="Settings" icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-              </svg>
-            } />
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <DistributionChart
+              title="Projects by Category"
+              data={charts.projectsByCategory || {}}
+              emptyText="No project category data"
+              gradientClass="from-blue-500 to-cyan-500"
+            />
+            <DistributionChart
+              title="Skills by Category"
+              data={charts.skillsByCategory || {}}
+              emptyText="No skill category data"
+              gradientClass="from-emerald-500 to-teal-500"
+            />
+          </div>
+
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Last 7 Days Traffic</h3>
+            <WeeklyTrafficChart points={charts.weeklyTraffic || []} />
           </div>
         </div>
       </section>
@@ -225,6 +235,87 @@ export default function AdminHome() {
   );
 }
 
+function DistributionChart({
+  title,
+  data,
+  emptyText,
+  gradientClass,
+}: {
+  title: string
+  data: Record<string, number>
+  emptyText: string
+  gradientClass: string
+}) {
+  const entries = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 6)
+  const max = entries[0]?.[1] || 1
+
+  return (
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+      <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">{title}</h3>
+      {entries.length === 0 ? (
+        <p className="text-sm text-gray-500 dark:text-gray-400">{emptyText}</p>
+      ) : (
+        <div className="space-y-3">
+          {entries.map(([label, value]) => (
+            <div key={label}>
+              <div className="flex items-center justify-between text-xs sm:text-sm mb-1">
+                <span className="text-gray-700 dark:text-gray-300 truncate pr-2">{label}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{value}</span>
+              </div>
+              <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                <div
+                  className={`h-full bg-gradient-to-r ${gradientClass}`}
+                  style={{ width: `${Math.max(8, (value / max) * 100)}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function WeeklyTrafficChart({ points }: { points: WeeklyPoint[] }) {
+  if (!points.length) {
+    return <p className="text-sm text-gray-500 dark:text-gray-400">No traffic data for the last 7 days.</p>
+  }
+
+  const max = Math.max(
+    1,
+    ...points.map(point => Math.max(point.pageViews, point.messages))
+  )
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-7 gap-2 sm:gap-3 items-end h-40">
+        {points.map(point => (
+          <div key={point.label} className="flex flex-col items-center gap-1">
+            <div className="w-full h-28 sm:h-32 flex items-end justify-center gap-1">
+              <div
+                className="w-3 sm:w-4 rounded-t bg-blue-500/80"
+                style={{ height: `${Math.max(2, (point.pageViews / max) * 100)}%` }}
+                title={`Page views: ${point.pageViews}`}
+              />
+              <div
+                className="w-3 sm:w-4 rounded-t bg-amber-500/80"
+                style={{ height: `${Math.max(2, (point.messages / max) * 100)}%` }}
+                title={`Messages: ${point.messages}`}
+              />
+            </div>
+            <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{point.label}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+        <span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-blue-500/80" />Page Views</span>
+        <span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-amber-500/80" />Messages</span>
+      </div>
+    </div>
+  )
+}
+
 function StatCard({ label, value, icon, color, href }: { label: string; value: number; icon: React.ReactNode; color: string; href?: string }) {
   const colorMap: Record<string, { bg: string; text: string; iconBg: string }> = {
     blue: { 
@@ -246,6 +337,11 @@ function StatCard({ label, value, icon, color, href }: { label: string; value: n
       bg: 'bg-purple-50 dark:bg-purple-900/20', 
       text: 'text-purple-600 dark:text-purple-400',
       iconBg: 'bg-purple-100 dark:bg-purple-900/40'
+    },
+    orange: {
+      bg: 'bg-orange-50 dark:bg-orange-900/20',
+      text: 'text-orange-600 dark:text-orange-400',
+      iconBg: 'bg-orange-100 dark:bg-orange-900/40'
     }
   };
   
@@ -266,16 +362,4 @@ function StatCard({ label, value, icon, color, href }: { label: string; value: n
   );
 
   return href ? <Link href={href}>{content}</Link> : content;
-}
-
-function QuickActionCard({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition group active:scale-95"
-    >
-      <span className="text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-110 transition-all">{icon}</span>
-      <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{label}</span>
-    </Link>
-  );
 }

@@ -33,13 +33,24 @@ interface SiteSettings {
   accent_color: string
 }
 
+const legacyVisibleSections = ['hero', 'about', 'skills', 'projects', 'experience', 'contact'] as const
+const defaultVisibleSections = ['hero', 'about', 'skills', 'projects', 'experience', 'certificates', 'contact'] as const
+
+const normalizeVisibleSections = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [...defaultVisibleSections]
+
+  const sections = Array.from(new Set(value.filter((section): section is string => typeof section === 'string')))
+  const isLegacySet = sections.length === legacyVisibleSections.length && legacyVisibleSections.every(section => sections.includes(section))
+  return isLegacySet ? [...defaultVisibleSections] : sections
+}
+
 export default function Home() {
   const { applyThemeFromSettings } = useTheme()
   const { setIsLoading, setLoadingProgress } = useGlobalLoading()
   const [settings, setSettings] = useState<SiteSettings>({
     maintenance_mode: false,
     maintenance_message: 'Site is under maintenance. Please check back soon.',
-    visible_sections: ['hero', 'about', 'skills', 'projects', 'experience', 'certificates', 'contact'],
+    visible_sections: [...defaultVisibleSections],
     show_footer: true,
     show_navigation: true,
     enable_animations: true,
@@ -72,7 +83,7 @@ export default function Home() {
         setSettings({
           maintenance_mode: data.maintenance_mode ?? false,
           maintenance_message: data.maintenance_message ?? 'Site is under maintenance. Please check back soon.',
-          visible_sections: data.visible_sections ?? ['hero', 'about', 'skills', 'projects', 'experience', 'certificates', 'contact'],
+          visible_sections: normalizeVisibleSections(data.visible_sections),
           show_footer: data.show_footer ?? true,
           show_navigation: data.show_navigation ?? true,
           enable_animations: data.enable_animations ?? true,
