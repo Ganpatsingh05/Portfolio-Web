@@ -14,9 +14,31 @@ import { SiLeetcode } from 'react-icons/si'
 import { openSocialLink, scrollToSection, openEmail } from '../../utils/actions'
 import { usePersonalInfo } from '@/lib/hooks'
 
+interface PersonalInfo {
+  name?: string
+  title?: string
+  email?: string
+  location?: string
+  github_url?: string
+  linkedin_url?: string
+  leetcode_url?: string
+  footer_bio?: string
+}
+
+const defaultPersonalInfo: PersonalInfo = {
+  name: 'Ganpat Singh',
+  title: 'Full Stack Developer',
+  email: 'ganpatsingh.tech@gmail.com',
+  location: 'Available Worldwide',
+  github_url: 'https://github.com/Ganpatsingh05',
+  linkedin_url: 'https://linkedin.com/in/ganpatsingh05',
+  leetcode_url: 'https://leetcode.com/ganpatsingh05',
+  footer_bio: 'Passionate about creating innovative web solutions and exploring the latest in AI and modern web technologies.',
+}
+
 export default function Footer() {
   const currentYear = new Date().getFullYear()
-  const { data: personalInfo = {} } = usePersonalInfo()
+  const { data: personalInfo = defaultPersonalInfo } = usePersonalInfo()
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })

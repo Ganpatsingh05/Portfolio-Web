@@ -170,6 +170,8 @@ export const api = {
       status: 'completed' | 'in-progress' | 'planning';
       featured?: boolean;
       image_url?: string;
+      timeline?: string;
+      created_at?: string;
       sort_order?: number;
       start_date?: string;
       end_date?: string;
@@ -198,9 +200,14 @@ export const api = {
       period: string;
       description?: string | string[];
       type: 'experience' | 'education';
+      skills?: string[];
       location?: string;
+      company_url?: string;
+      is_current?: boolean;
       start_date?: string;
       end_date?: string;
+      created_at?: string;
+      updated_at?: string;
     }>>(apiEndpoints.experiences);
   },
 
@@ -211,10 +218,12 @@ export const api = {
       title: string;
       issuer: string;
       issue_date?: string;
+      timeline?: string;
       credential_id?: string;
       credential_url?: string;
       description?: string;
       image_url?: string;
+      visible?: boolean;
       sort_order?: number;
     }>>(apiEndpoints.certificates);
   },
@@ -231,6 +240,7 @@ export const api = {
       linkedin_url?: string;
       leetcode_url?: string;
       resume_url?: string;
+      footer_bio?: string;
       bio?: string;
       journey?: string;
       degree?: string;
@@ -309,6 +319,7 @@ export const fallbackData = {
     title: 'Full Stack Developer & AI Enthusiast',
     email: 'ask.gsinghr@gmail.com',
     location: 'Jodhpur, Rajasthan (India)',
+    footer_bio: 'Passionate about creating innovative web solutions and exploring the latest in AI and modern web technologies.',
     github_url: 'https://github.com/Ganpatsingh05',
     linkedin_url: 'https://linkedin.com/in/ganpatsingh05',
     leetcode_url: 'https://leetcode.com/ganpatsingh05',
@@ -331,6 +342,8 @@ export const fallbackData = {
       github_url: "https://github.com/example/project",
       demo_url: "https://example.com",
       image_url: undefined,
+      timeline: undefined,
+      created_at: undefined,
       start_date: undefined,
       end_date: undefined,
     },
