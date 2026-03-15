@@ -344,3 +344,18 @@ button:focus {
   transform-origin: 70% 70%;
   display: inline-block;
 }
+
+/* Desktop-only global zoom wrapper. Disable on mobile to avoid side clipping. */
+.home-zoom-layer {
+  zoom: 90%;
+  width: 111.111111%;
+  margin-left: -5.555556%;
+}
+
+@media (max-width: 767px) {
+  .home-zoom-layer {
+    zoom: 100%;
+    width: 100%;
+    margin-left: 0;
+  }
+}

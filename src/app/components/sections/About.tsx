@@ -11,8 +11,20 @@ import { usePersonalInfo } from '@/lib/hooks'
 
 const LottieAnimation = dynamic(() => import('../animations/LottieAnimation'), { ssr: false })
 
+interface PersonalInfo {
+  name?: string
+  bio?: string
+  journey?: string
+}
+
+const defaultPersonalInfo: PersonalInfo = {
+  name: 'Ganpat Singh',
+  bio: "I'm a passionate developer who loves creating innovative solutions and bringing ideas to life through code.",
+  journey: "With a strong foundation in computer science and a passion for emerging technologies, I've been developing web applications and exploring AI/ML.",
+}
+
 export default function About() {
-  const { data: personalInfo = {} as any, isLoading: loading } = usePersonalInfo()
+  const { data: personalInfo = defaultPersonalInfo, isLoading: loading } = usePersonalInfo()
 
   const stats = [
     { number: "1", label: "Years Experience", icon: FaClock },
@@ -78,10 +90,10 @@ export default function About() {
               className="space-y-3 sm:space-y-4"
             >
               <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
-                Hi! I'm {personalInfo.name}
+                Hi! I'm {personalInfo.name || defaultPersonalInfo.name}
               </h3>
               <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-                {personalInfo.bio}
+                {personalInfo.bio || defaultPersonalInfo.bio}
               </p>
             </motion.div>
 
@@ -94,7 +106,7 @@ export default function About() {
             >
               <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed flex items-start gap-2 sm:gap-3">
                 <BiTargetLock className="text-orange-500 mt-0.5 sm:mt-1 flex-shrink-0 text-base sm:text-lg" />
-                {personalInfo.journey}
+                {personalInfo.journey || defaultPersonalInfo.journey}
               </p>
             </motion.div>
 

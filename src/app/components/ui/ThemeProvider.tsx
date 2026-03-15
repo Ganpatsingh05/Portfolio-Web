@@ -29,7 +29,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 export function ThemeProvider({
   children,
   defaultTheme = 'light',
-  storageKey = 'theme',
+  storageKey = 'portfolio-theme',
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme)
@@ -54,20 +54,31 @@ export function ThemeProvider({
     if (!mounted) return
 
     const root = window.document.documentElement
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    const resolvedTheme = theme === 'system' ? systemTheme : theme
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 
-    root.classList.remove('light', 'dark')
-    root.classList.add(resolvedTheme)
+    const applyResolvedTheme = () => {
+      const systemTheme = mediaQuery.matches ? 'dark' : 'light'
+      const resolvedTheme = theme === 'system' ? systemTheme : theme
 
-    // Update the CSS variable for smoother transitions
-    if (resolvedTheme === 'dark') {
-      root.style.setProperty('--background', '#0a0a0a')
-      root.style.setProperty('--foreground', '#ededed')
-    } else {
-      root.style.setProperty('--background', '#ffffff')
-      root.style.setProperty('--foreground', '#171717')
+      root.classList.remove('light', 'dark')
+      root.classList.add(resolvedTheme)
+
+      if (resolvedTheme === 'dark') {
+        root.style.setProperty('--background', '#0a0a0a')
+        root.style.setProperty('--foreground', '#ededed')
+      } else {
+        root.style.setProperty('--background', '#ffffff')
+        root.style.setProperty('--foreground', '#171717')
+      }
     }
+
+    applyResolvedTheme()
+
+    if (theme !== 'system') return
+
+    const handleSystemThemeChange = () => applyResolvedTheme()
+    mediaQuery.addEventListener('change', handleSystemThemeChange)
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
   }, [theme, mounted])
 
   const setAccentColor = useCallback((color: string) => {

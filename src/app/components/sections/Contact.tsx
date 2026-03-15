@@ -19,11 +19,31 @@ import {
 } from 'react-icons/fa'
 import { SiLeetcode } from 'react-icons/si'
 import { submitContactForm, downloadResume, openSocialLink, openEmail } from '../../utils/actions'
-import { useToast } from '@/app/admin/components/Toast'
+import { useToast } from '@/app/components/ui/Toast'
 import { usePersonalInfo } from '@/lib/hooks'
 
+interface PersonalInfo {
+  name?: string
+  title?: string
+  email?: string
+  location?: string
+  github_url?: string
+  linkedin_url?: string
+  leetcode_url?: string
+}
+
+const defaultPersonalInfo: PersonalInfo = {
+  name: 'Ganpat Singh',
+  title: 'Full Stack Developer',
+  email: 'ganpatsingh.tech@gmail.com',
+  location: 'Available Worldwide (Remote)',
+  github_url: 'https://github.com/Ganpatsingh05',
+  linkedin_url: 'https://linkedin.com/in/ganpatsingh05',
+  leetcode_url: 'https://leetcode.com/ganpatsingh05',
+}
+
 export default function Contact() {
-  const { data: personalInfo = {} } = usePersonalInfo()
+  const { data: personalInfo = defaultPersonalInfo } = usePersonalInfo()
   const toast = useToast()
   const [formData, setFormData] = useState({
     name: '',
@@ -94,7 +114,11 @@ export default function Contact() {
       const result = await submitContactForm(formData)
       
       if (result.success) {
-        toast.success('Message Sent!', result.message)
+        if (result.emailSent) {
+          toast.success('Message Sent!', result.message)
+        } else {
+          toast.warning('Message Saved', result.message)
+        }
         setFormData({ name: '', email: '', subject: '', message: '' })
       } else {
         toast.error('Failed to Send', result.message)

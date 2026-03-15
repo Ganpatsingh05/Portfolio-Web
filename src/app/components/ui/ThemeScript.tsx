@@ -44,6 +44,11 @@ export function ThemeScript() {
                 document.documentElement.style.setProperty('--background', '#ffffff');
                 document.documentElement.style.setProperty('--foreground', '#171717');
               }
+
+              var portfolioAccent = localStorage.getItem('portfolio-accent-color');
+              if (portfolioAccent) {
+                document.documentElement.style.setProperty('--accent-color', portfolioAccent);
+              }
             } catch (e) {
               console.warn('Theme initialization failed:', e);
             }

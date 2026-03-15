@@ -8,17 +8,50 @@ import { BiTargetLock } from 'react-icons/bi'
 import { SiReact, SiNodedotjs } from 'react-icons/si'
 import { HiOutlineHand } from 'react-icons/hi'
 import { downloadResume, scrollToSection } from '../../utils/actions'
+import { usePersonalInfo } from '@/lib/hooks'
 
 // Dynamic import for Lottie animation
 const LottieAnimation = dynamic(() => import('../animations/LottieAnimation'), { ssr: false })
 
+interface PersonalInfo {
+  name?: string
+  bio?: string
+  journey?: string
+}
+
+const defaultPersonalInfo: PersonalInfo = {
+  name: 'Ganpat Singh',
+  bio: "I'm a passionate developer who loves creating innovative solutions and bringing ideas to life through code.",
+  journey: "With a strong foundation in computer science and a passion for emerging technologies, I've been developing web applications and exploring AI/ML.",
+}
+
 export default function MobileAbout() {
+  const { data: personalInfo = defaultPersonalInfo, isLoading: loading } = usePersonalInfo()
+
   const stats = [
     { number: "1", label: "Years Experience", icon: FaClock },
     { number: "15+", label: "Projects Completed", icon: FaRocket },
     { number: "15+", label: "Technologies", icon: BsLightning },
     { number: "100%", label: "Client Satisfaction", icon: BsEmojiSmile }
   ]
+
+  if (loading) {
+    return (
+      <section className="py-12 bg-white dark:bg-gray-900 relative overflow-hidden" id="about">
+        <div className="max-w-md mx-auto px-4 text-center">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-36 mx-auto"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-56 mx-auto"></div>
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="py-12 bg-white dark:bg-gray-900 relative overflow-hidden" id="about">
@@ -115,12 +148,10 @@ export default function MobileAbout() {
           className="text-center space-y-4 mb-8"
         >
           <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center justify-center gap-2">
-            Hi! I'm Ganpat Singh <HiOutlineHand className="text-yellow-500" />
+            Hi! I'm {personalInfo.name || defaultPersonalInfo.name} <HiOutlineHand className="text-yellow-500" />
           </h3>
-          <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed">
-            I'm a passionate Full Stack Developer with a strong focus on creating innovative 
-            digital experiences. My journey in technology started with curiosity and has 
-            evolved into a mission to solve real-world problems through code.
+          <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed max-w-sm mx-auto">
+            {personalInfo.bio || defaultPersonalInfo.bio}
           </p>
         </motion.div>
 
@@ -135,8 +166,7 @@ export default function MobileAbout() {
           <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <BiTargetLock className="text-red-500 mt-1 flex-shrink-0" />
             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-              I specialize in modern web technologies and AI integration, constantly exploring 
-              new ways to enhance user experiences.
+              {personalInfo.journey || defaultPersonalInfo.journey}
             </p>
           </div>
           <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -160,7 +190,7 @@ export default function MobileAbout() {
             onClick={downloadResume}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-lg flex items-center justify-center gap-2"
+            className="w-full px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-500 dark:to-amber-500 text-white rounded-xl font-semibold transition-colors shadow-lg flex items-center justify-center gap-2"
           >
             <FaDownload /> Download Resume
           </motion.button>
@@ -168,7 +198,7 @@ export default function MobileAbout() {
             onClick={() => scrollToSection('#contact')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full px-6 py-3 border-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 rounded-xl font-semibold hover:bg-blue-600 hover:text-white dark:hover:bg-blue-400 dark:hover:text-gray-900 transition-colors flex items-center justify-center gap-2"
+            className="w-full px-6 py-3 border-2 border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400 rounded-xl font-semibold hover:bg-orange-600 hover:text-white dark:hover:bg-orange-400 dark:hover:text-gray-900 transition-colors flex items-center justify-center gap-2"
           >
             <FaComments /> Let's Talk
           </motion.button>
@@ -192,12 +222,12 @@ export default function MobileAbout() {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
                 whileHover={{ scale: 1.02, y: -2 }}
-                className="text-center p-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-lg"
+                className="text-center p-4 bg-gradient-to-br from-white to-orange-50 dark:from-gray-800 dark:to-orange-900/20 rounded-xl shadow-lg border border-orange-100 dark:border-orange-800/30"
               >
-                <div className="text-2xl mb-2 text-blue-600 dark:text-blue-400 flex justify-center">
+                <div className="text-2xl mb-2 text-orange-600 dark:text-orange-400 flex justify-center">
                   <IconComponent />
                 </div>
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">
                   {stat.number}
                 </div>
                 <div className="text-gray-600 dark:text-gray-300 font-medium text-sm">

@@ -1,5 +1,26 @@
 import { api } from '@/lib/api'
-import { toast } from '@/app/admin/components/Toast'
+import { toast } from '@/app/components/ui/Toast'
+
+const URL_SCHEME_REGEX = /^[a-zA-Z][a-zA-Z\d+\-.]*:/
+
+export const normalizeExternalUrl = (url?: string | null): string | null => {
+  if (!url) return null
+
+  const trimmed = url.trim()
+  if (!trimmed || trimmed === '#') return null
+
+  const withScheme = URL_SCHEME_REGEX.test(trimmed) ? trimmed : `https://${trimmed}`
+
+  try {
+    const parsed = new URL(withScheme)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+    return parsed.toString()
+  } catch {
+    return null
+  }
+}
+
+export const isSafeExternalUrl = (url?: string | null): boolean => normalizeExternalUrl(url) !== null
 
 export const scrollToSection = (sectionId: string) => {
   const element = document.getElementById(sectionId.replace('#', ''))
@@ -30,8 +51,9 @@ export const downloadResume = async () => {
     // Get resume URL from personal info
     const personalInfo = await api.getPersonalInfo()
     
-    if (personalInfo.resume_url) {
-      window.open(personalInfo.resume_url, '_blank')
+    const safeResumeUrl = normalizeExternalUrl(personalInfo.resume_url)
+    if (safeResumeUrl) {
+      window.open(safeResumeUrl, '_blank', 'noopener,noreferrer')
       
       // Track analytics
       api.trackEvent('resume_download', { 
@@ -58,23 +80,27 @@ export const downloadResume = async () => {
 }
 
 export const openProjectDemo = (demoUrl: string) => {
-  if (demoUrl === '#' || !demoUrl) {
+  const safeDemoUrl = normalizeExternalUrl(demoUrl)
+  if (!safeDemoUrl) {
     toast.info('Demo Coming Soon', 'This project is still in development.')
     return
   }
-  window.open(demoUrl, '_blank')
+  window.open(safeDemoUrl, '_blank', 'noopener,noreferrer')
 }
 
 export const openProjectCode = (githubUrl: string) => {
-  if (githubUrl === '#' || !githubUrl) {
+  const safeGithubUrl = normalizeExternalUrl(githubUrl)
+  if (!safeGithubUrl) {
     toast.info('Source Code Coming Soon', 'Source code will be available soon!')
     return
   }
-  window.open(githubUrl, '_blank')
+  window.open(safeGithubUrl, '_blank', 'noopener,noreferrer')
 }
 
 export const openSocialLink = (url: string) => {
-  window.open(url, '_blank', 'noopener,noreferrer')
+  const safeUrl = normalizeExternalUrl(url)
+  if (!safeUrl) return
+  window.open(safeUrl, '_blank', 'noopener,noreferrer')
 }
 
 
@@ -92,12 +118,17 @@ export const submitContactForm = async (formData: {
     // Track analytics
     void api.trackEvent('contact_form', { subject: formData.subject })
 
-    return { success: true, message: result.message || 'Message sent successfully!' }
+    return {
+      success: true,
+      message: result.message || 'Message sent successfully!',
+      emailSent: result.email_sent !== false,
+    }
   } catch (error) {
     console.warn('Form submission failed:', error)
     return { 
       success: false, 
-      message: error instanceof Error ? error.message : 'Failed to send message. Please try again.' 
+      message: error instanceof Error ? error.message : 'Failed to send message. Please try again.',
+      emailSent: false,
     }
   }
 }

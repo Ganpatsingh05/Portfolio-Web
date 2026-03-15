@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "@/app/components/ui/ThemeProvider";
 import { ThemeScript } from "@/app/components/ui/ThemeScript";
 import { GlobalLoadingProvider } from "@/app/components/ui/GlobalLoadingProvider";
-import { ToastProvider } from "@/app/admin/components/Toast";
+import { ToastProvider } from "@/app/components/ui/Toast";
 import { QueryProvider } from "@/lib/QueryProvider";
 import "./globals.css";
 

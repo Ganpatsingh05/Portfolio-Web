@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FaAward, FaExternalLinkAlt, FaCalendarAlt, FaBuilding, FaSearchPlus } from 'react-icons/fa'
 import { useCertificates } from '@/lib/hooks'
+import { normalizeExternalUrl } from '../../utils/actions'
 
 interface Certificate {
   id?: string
@@ -79,8 +80,10 @@ export default function Certificates() {
 
         {/* Certificates Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
-          {certificates.map((cert: Certificate, index: number) => (
-            <motion.div
+          {certificates.map((cert: Certificate, index: number) => {
+            const safeCredentialUrl = normalizeExternalUrl(cert.credential_url)
+            return (
+              <motion.div
               key={cert.id || index}
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -147,9 +150,9 @@ export default function Certificates() {
                     ID: {cert.credential_id}
                   </span>
                 )}
-                {cert.credential_url && (
+                {safeCredentialUrl && (
                   <a
-                    href={cert.credential_url}
+                    href={safeCredentialUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors ml-auto"
@@ -160,7 +163,8 @@ export default function Certificates() {
               </div>
               </div>
             </motion.div>
-          ))}
+            )
+          })}
         </div>
       </div>
 

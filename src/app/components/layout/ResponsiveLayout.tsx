@@ -2,8 +2,6 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import dynamic from 'next/dynamic'
-import { api } from '@/app/lib/api'
-import { apiEndpoints } from '@/app/lib/config'
 
 // Critical components loaded immediately
 import Footer from '../ui/Footer'
@@ -40,7 +38,7 @@ interface SiteSettings {
 const defaultSettings: SiteSettings = {
   maintenance_mode: false,
   maintenance_message: 'Site is under maintenance. Please check back soon.',
-  visible_sections: ['hero', 'about', 'skills', 'projects', 'experience', 'contact'],
+  visible_sections: ['hero', 'about', 'skills', 'projects', 'experience', 'certificates', 'contact'],
   show_footer: true,
   show_navigation: true,
   enable_animations: true,
@@ -50,12 +48,16 @@ const defaultSettings: SiteSettings = {
 }
 
 interface ResponsiveLayoutProps {
+  initialSettings?: Partial<SiteSettings>
   children?: React.ReactNode
 }
 
-export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
+export default function ResponsiveLayout({ initialSettings, children }: ResponsiveLayoutProps) {
   const [isMobile, setIsMobile] = useState(false)
-  const [settings, setSettings] = useState<SiteSettings>(defaultSettings)
+  const [settings, setSettings] = useState<SiteSettings>({
+    ...defaultSettings,
+    ...initialSettings,
+  })
 
   // Detect mobile immediately (synchronous)
   useEffect(() => {
@@ -75,53 +77,11 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
     }
   }, [])
 
-  // Fetch settings asynchronously without blocking render
+  // Keep settings in sync with parent data source
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const data = await api.getSettings()
-        setSettings({
-          ...defaultSettings,
-          ...data,
-        })
-      } catch (error) {
-        console.warn('Failed to fetch settings, using defaults:', error)
-      }
-    }
-    
-    // Defer settings fetch
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(fetchSettings)
-    } else {
-      setTimeout(fetchSettings, 0)
-    }
-  }, [])
-
-  // Track page view analytics (deferred)
-  useEffect(() => {
-    const trackPageView = () => {
-      fetch(apiEndpoints.analytics, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_type: 'page_view',
-          event_data: { 
-            page: 'portfolio',
-            timestamp: new Date().toISOString(),
-            viewport: isMobile ? 'mobile' : 'desktop'
-          },
-        }),
-        keepalive: true, // Ensure the request completes even if page unloads
-      }).catch(() => {}) // Silent fail for analytics
-    }
-    
-    // Defer analytics to not block rendering
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(trackPageView)
-    } else {
-      setTimeout(trackPageView, 1000)
-    }
-  }, [isMobile])
+    if (!initialSettings) return
+    setSettings(prev => ({ ...prev, ...initialSettings }))
+  }, [initialSettings])
 
   // Helper to check if a section is visible
   const isVisible = (section: string) => settings.visible_sections.includes(section)
@@ -231,7 +191,7 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
       {isVisible('skills') && <Skills />}
       {isVisible('projects') && <Projects />}
       {isVisible('experience') && <Experience />}
-      <Certificates />
+      {isVisible('certificates') && <Certificates />}
       {isVisible('contact') && <Contact />}
       
       {/* Footer - Same for both mobile and desktop */}

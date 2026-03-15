@@ -253,8 +253,8 @@ export default function Skills() {
                   : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 active:bg-orange-50 dark:active:bg-gray-600 shadow-md border border-orange-200 dark:border-gray-600'
               }`}
             >
-              {category !== 'all' && categoryIcons[category as keyof typeof categoryIcons]}
-              {category === 'all' ? 'All Skills' : categoryNames[category as keyof typeof categoryNames]}
+              {category !== 'all' && categoryIcons[normalizeCategoryKey(category) as keyof typeof categoryIcons]}
+              {category === 'all' ? 'All Skills' : getCategoryLabel(category)}
             </motion.button>
           ))}
         </motion.div>

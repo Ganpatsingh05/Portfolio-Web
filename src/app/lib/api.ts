@@ -247,7 +247,7 @@ export const api = {
     message: string;
     phone?: string;
   }) {
-    return fetchApi<{ message: string; id: string }>(apiEndpoints.contact, {
+    return fetchApi<{ message: string; id: string; email_sent?: boolean }>(apiEndpoints.contact, {
       method: 'POST',
       body: JSON.stringify(data),
     });
