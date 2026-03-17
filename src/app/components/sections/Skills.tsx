@@ -201,20 +201,19 @@ export default function Skills() {
         name: skill.name,
         level: skill.level,
         desc: softSkillDescriptions[(skill.name || '').toLowerCase()] || 'Professional competency',
-        icon_name: skill.icon_name,
-        icon_url: skill.icon_url
+        icon_name: skill.icon_name
       }))
     }
 
     return [
-      { id: 'soft-1', name: 'Problem Solving', level: 94, desc: 'Analytical thinking' },
-      { id: 'soft-2', name: 'Team Collaboration', level: 92, desc: 'Effective teamwork' },
-      { id: 'soft-3', name: 'Communication', level: 90, desc: 'Clear & concise' },
-      { id: 'soft-4', name: 'Leadership', level: 88, desc: 'Guiding teams' },
-      { id: 'soft-5', name: 'Adaptability', level: 93, desc: 'Quick learner' },
-      { id: 'soft-6', name: 'Time Management', level: 89, desc: 'Meeting deadlines' },
-      { id: 'soft-7', name: 'Critical Thinking', level: 91, desc: 'Logical reasoning' },
-      { id: 'soft-8', name: 'Creativity', level: 90, desc: 'Innovative solutions' }
+      { id: 'soft-1', name: 'Problem Solving', level: 94, desc: 'Analytical thinking', icon_name: undefined },
+      { id: 'soft-2', name: 'Team Collaboration', level: 92, desc: 'Effective teamwork', icon_name: undefined },
+      { id: 'soft-3', name: 'Communication', level: 90, desc: 'Clear & concise', icon_name: undefined },
+      { id: 'soft-4', name: 'Leadership', level: 88, desc: 'Guiding teams', icon_name: undefined },
+      { id: 'soft-5', name: 'Adaptability', level: 93, desc: 'Quick learner', icon_name: undefined },
+      { id: 'soft-6', name: 'Time Management', level: 89, desc: 'Meeting deadlines', icon_name: undefined },
+      { id: 'soft-7', name: 'Critical Thinking', level: 91, desc: 'Logical reasoning', icon_name: undefined },
+      { id: 'soft-8', name: 'Creativity', level: 90, desc: 'Innovative solutions', icon_name: undefined }
     ]
   }, [adminSoftSkills])
   
@@ -426,9 +425,7 @@ export default function Skills() {
                 className={`bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-xl shadow-md border border-orange-200 dark:border-gray-700 group transition-colors ${softColor.hoverBorder}`}
               >
                 <div className={`text-2xl sm:text-3xl mb-2 sm:mb-3 ${softColor.icon}`}>
-                  {skill.icon_url ? (
-                    <img src={skill.icon_url} alt={skill.name} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
-                  ) : skill.icon_name && iconMap[skill.icon_name] ? (
+                  {skill.icon_name && iconMap[skill.icon_name] ? (
                     iconMap[skill.icon_name]
                   ) : (
                     <FallbackIcon />

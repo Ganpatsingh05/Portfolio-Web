@@ -186,6 +186,7 @@ export const api = {
       level: number;
       category: string;
       icon_name?: string;
+      icon_url?: string;
       sort_order?: number;
       is_featured?: boolean;
     }>>(apiEndpoints.skills);
@@ -349,12 +350,12 @@ export const fallbackData = {
     },
   ],
   skills: [
-    { id: '1', name: 'React', level: 90, category: 'frontend', icon_name: 'FaReact', sort_order: 1, is_featured: true },
-    { id: '2', name: 'TypeScript', level: 85, category: 'frontend', icon_name: 'SiTypescript', sort_order: 2, is_featured: true },
-    { id: '3', name: 'Node.js', level: 80, category: 'backend', icon_name: 'FaNodeJs', sort_order: 3, is_featured: true },
-    { id: '4', name: 'Python', level: 75, category: 'backend', icon_name: 'FaPython', sort_order: 4, is_featured: false },
-    { id: '5', name: 'PostgreSQL', level: 70, category: 'backend', icon_name: 'SiPostgresql', sort_order: 5, is_featured: false },
-    { id: '6', name: 'Docker', level: 65, category: 'tools', icon_name: 'FaDocker', sort_order: 6, is_featured: false },
+    { id: '1', name: 'React', level: 90, category: 'frontend', icon_name: 'FaReact', icon_url: undefined, sort_order: 1, is_featured: true },
+    { id: '2', name: 'TypeScript', level: 85, category: 'frontend', icon_name: 'SiTypescript', icon_url: undefined, sort_order: 2, is_featured: true },
+    { id: '3', name: 'Node.js', level: 80, category: 'backend', icon_name: 'FaNodeJs', icon_url: undefined, sort_order: 3, is_featured: true },
+    { id: '4', name: 'Python', level: 75, category: 'backend', icon_name: 'FaPython', icon_url: undefined, sort_order: 4, is_featured: false },
+    { id: '5', name: 'PostgreSQL', level: 70, category: 'backend', icon_name: 'SiPostgresql', icon_url: undefined, sort_order: 5, is_featured: false },
+    { id: '6', name: 'Docker', level: 65, category: 'tools', icon_name: 'FaDocker', icon_url: undefined, sort_order: 6, is_featured: false },
   ],
   experiences: [
     {
