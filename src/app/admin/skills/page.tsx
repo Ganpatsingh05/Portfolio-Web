@@ -5,7 +5,10 @@ import { adminApi, ensureAuthedClient } from '@/app/lib/admin/api';
 import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmModal';
 
-interface Skill { id: string; name: string; level: number; category: string; icon_name?: string; sort_order?: number; is_featured?: boolean; }
+interface Skill { id: string; name: string; level: number; category: string; icon_name?: string; icon_url?: string; sort_order?: number; is_featured?: boolean; }
+type SkillType = 'technical' | 'soft';
+
+const isSoftSkill = (category?: string) => (category || '').toLowerCase() === 'soft';
 
 export default function SkillsPage() {
   const router = useRouter();
@@ -14,7 +17,8 @@ export default function SkillsPage() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Skill | null>(null);
-  const [form, setForm] = useState({ name: '', level: 50, category: '', icon_name: '' });
+  const [activeSection, setActiveSection] = useState<SkillType>('technical');
+  const [form, setForm] = useState({ name: '', level: 50, category: '', skill_type: 'technical' as SkillType, icon_url: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -41,14 +45,45 @@ export default function SkillsPage() {
     } finally { setLoading(false);} };
   useEffect(()=>{ if(!ensureAuthedClient()){ router.replace('/admin/login'); return;} load(); },[router]);
 
-  const startAdd = () => { setEditing(null); setFormError(null); setForm({ name:'', level:50, category:'', icon_name:'' }); setShowForm(true); setTimeout(()=>firstFieldRef.current?.focus(), 0); };
-  const startEdit = (s: Skill) => { setEditing(s); setFormError(null); setForm({ name:s.name, level:s.level, category:s.category, icon_name:s.icon_name||'' }); setShowForm(true); setTimeout(()=>firstFieldRef.current?.focus(), 0); };
+  const startAdd = (type: SkillType = activeSection) => {
+    setEditing(null);
+    setFormError(null);
+    setForm({ name:'', level:50, category:type === 'soft' ? 'soft' : '', skill_type:type, icon_url:'' });
+    setShowForm(true);
+    setTimeout(()=>firstFieldRef.current?.focus(), 0);
+  };
+
+  const startEdit = (s: Skill) => {
+    const skillType: SkillType = isSoftSkill(s.category) ? 'soft' : 'technical';
+    setActiveSection(skillType);
+    setEditing(s);
+    setFormError(null);
+    setForm({
+      name:s.name,
+      level:s.level,
+      category: skillType === 'soft' ? 'soft' : s.category,
+      skill_type: skillType,
+      icon_url:s.icon_url||''
+    });
+    setShowForm(true);
+    setTimeout(()=>firstFieldRef.current?.focus(), 0);
+  };
 
   const save = async () => {
     setFormError(null);
     if (!form.name.trim()) { setFormError('Name is required'); return; }
     if (form.level < 0 || form.level > 100) { setFormError('Level must be between 0-100'); return; }
-    const payload = { ...form };
+    if (form.skill_type === 'technical' && !form.category.trim()) {
+      setFormError('Category is required for technical skills');
+      return;
+    }
+
+    const payload = {
+      name: form.name.trim(),
+      level: form.level,
+      category: form.skill_type === 'soft' ? 'soft' : form.category,
+      icon_url: form.icon_url.trim() || null
+    };
     setSaving(true);
     try {
       if(editing) await adminApi.skills.update(editing.id, payload); else await adminApi.skills.create(payload);
@@ -99,13 +134,26 @@ export default function SkillsPage() {
     </div>
   );
 
-  // Group skills by category
-  const groupedSkills = skills.reduce((acc, skill) => {
+  const technicalSkills = skills.filter(skill => !isSoftSkill(skill.category));
+  const softSkills = skills.filter(skill => isSoftSkill(skill.category));
+  const activeSkills = activeSection === 'technical' ? technicalSkills : softSkills;
+
+  // Group technical skills by category
+  const groupedSkills = technicalSkills.reduce((acc, skill) => {
     const cat = skill.category || 'Uncategorized';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(skill);
     return acc;
   }, {} as Record<string, Skill[]>);
+
+  const softGradients = [
+    'from-rose-500 to-pink-500',
+    'from-cyan-500 to-blue-500',
+    'from-emerald-500 to-green-500',
+    'from-violet-500 to-purple-500',
+    'from-amber-500 to-orange-500',
+    'from-fuchsia-500 to-rose-500'
+  ];
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -113,94 +161,173 @@ export default function SkillsPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Skills</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your technical skills and proficiency levels</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage technical and soft skills with a section switcher</p>
         </div>
-        <button 
-          onClick={startAdd} 
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-medium"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Skill
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="inline-flex items-center p-1 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setActiveSection('technical')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${activeSection === 'technical' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+            >
+              Technical Skills
+            </button>
+            <button
+              onClick={() => setActiveSection('soft')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${activeSection === 'soft' ? 'bg-amber-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+            >
+              Soft Skills
+            </button>
+          </div>
+          <button 
+            onClick={() => startAdd(activeSection)} 
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-white transition font-medium ${activeSection === 'technical' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700'}`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            {activeSection === 'technical' ? 'Add Technical Skill' : 'Add Soft Skill'}
+          </button>
+        </div>
       </div>
 
-      {/* Skills by Category */}
-      {skills.length === 0 ? (
+      {/* Skills by Active Section */}
+      {activeSkills.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
           <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
-          <p className="text-lg font-medium text-gray-900 dark:text-white mb-1">No skills yet</p>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">Add your first skill to showcase your expertise</p>
-          <button onClick={startAdd} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition text-sm font-medium">
+          <p className="text-lg font-medium text-gray-900 dark:text-white mb-1">No {activeSection} skills yet</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Add your first {activeSection} skill to showcase your expertise</p>
+          <button
+            onClick={() => startAdd(activeSection)}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white transition text-sm font-medium ${activeSection === 'technical' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700'}`}
+          >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Add Skill
+            {activeSection === 'technical' ? 'Add Technical Skill' : 'Add Soft Skill'}
           </button>
         </div>
       ) : (
-        <div className="space-y-6">
-          {Object.entries(groupedSkills).map(([category, categorySkills]) => (
-            <div key={category} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+        activeSection === 'technical' ? (
+          <div className="space-y-6">
+            {Object.entries(groupedSkills).map(([category, categorySkills]) => (
+              <div key={category} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                      <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white capitalize">{category}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{categorySkills.length} skill{categorySkills.length !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {categorySkills.map(s => (
+                      <div key={s.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <h4 className="font-medium text-gray-900 dark:text-white">{s.name}</h4>
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400">
+                            {s.level}%
+                          </span>
+                        </div>
+                        <div className="h-2 w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden mb-3">
+                          <div
+                            className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
+                            style={{ width: `${s.level}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition">
+                          <button
+                            onClick={() => startEdit(s)}
+                            className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition"
+                            title="Edit"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => del(s)}
+                            className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition"
+                            title="Delete"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-amber-900/20">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                    <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg">
+                    <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white capitalize">{category}</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{categorySkills.length} skill{categorySkills.length !== 1 ? 's' : ''}</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Soft Skills</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{softSkills.length} skill{softSkills.length !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
               </div>
-              <div className="p-4">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {categorySkills.map(s => (
-                    <div key={s.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <h4 className="font-medium text-gray-900 dark:text-white">{s.name}</h4>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400">
-                          {s.level}%
-                        </span>
-                      </div>
-                      <div className="h-2 w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden mb-3">
-                        <div 
-                          className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300" 
-                          style={{ width: `${s.level}%` }} 
-                        />
-                      </div>
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition">
-                        <button 
-                          onClick={() => startEdit(s)} 
-                          className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition"
-                          title="Edit"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button 
-                          onClick={() => del(s)} 
-                          className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition"
-                          title="Delete"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+            </div>
+            <div className="p-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {softSkills.map((s, index) => (
+                  <div key={s.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600 group">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <h4 className="font-medium text-gray-900 dark:text-white">{s.name}</h4>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">
+                        {s.level}%
+                      </span>
                     </div>
-                  ))}
-                </div>
+                    <div className="h-2 w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden mb-3">
+                      <div
+                        className={`h-full bg-gradient-to-r ${softGradients[index % softGradients.length]} rounded-full transition-all duration-300`}
+                        style={{ width: `${s.level}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition">
+                      <button
+                        onClick={() => startEdit(s)}
+                        className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition"
+                        title="Edit"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => del(s)}
+                        className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition"
+                        title="Delete"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        )
       )}
 
       {showForm && (
@@ -240,6 +367,26 @@ export default function SkillsPage() {
                 />
               </div>
               <div>
+                <label htmlFor="skill-type" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Skill Section</label>
+                <select
+                  id="skill-type"
+                  value={form.skill_type}
+                  onChange={e => {
+                    const nextType = e.target.value as SkillType;
+                    setForm(f => ({
+                      ...f,
+                      skill_type: nextType,
+                      category: nextType === 'soft' ? 'soft' : (isSoftSkill(f.category) ? '' : f.category)
+                    }));
+                  }}
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 px-3 py-2.5 text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition"
+                >
+                  <option value="technical">Technical Skills</option>
+                  <option value="soft">Soft Skills</option>
+                </select>
+              </div>
+              {form.skill_type === 'technical' && (
+              <div>
                 <label htmlFor="skill-category" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Category</label>
                 <select 
                   id="skill-category" 
@@ -260,10 +407,16 @@ export default function SkillsPage() {
                   <option value="design">Design & UI/UX</option>
                   <option value="other">Other</option>
                   {Array.from(new Set(skills.map(s => s.category).filter(Boolean)))
-                    .filter(c => !['frontend', 'backend', 'database', 'tools', 'languages', 'frameworks', 'mobile', 'cloud', 'ai-ml', 'design', 'other'].includes(c.toLowerCase()))
+                    .filter(c => !['frontend', 'backend', 'database', 'tools', 'languages', 'frameworks', 'mobile', 'cloud', 'ai-ml', 'design', 'other', 'soft'].includes(c.toLowerCase()))
                     .map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
+              )}
+              {form.skill_type === 'soft' && (
+                <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
+                  This skill will be shown in the Soft Skills section on the portfolio.
+                </p>
+              )}
               <div>
                 <label htmlFor="skill-level" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center justify-between">
                   Proficiency Level 
@@ -287,16 +440,23 @@ export default function SkillsPage() {
                 </div>
               </div>
               <div>
-                <label htmlFor="skill-icon" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
-                  Icon Name <span className="text-gray-400 font-normal">(optional)</span>
+                <label htmlFor="skill-icon-url" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+                  Icon URL <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <input 
-                  id="skill-icon" 
-                  value={form.icon_name} 
-                  onChange={e => setForm(f => ({...f, icon_name: e.target.value}))} 
-                  placeholder="e.g. react, python, docker"
+                  id="skill-icon-url" 
+                  value={form.icon_url} 
+                  onChange={e => setForm(f => ({...f, icon_url: e.target.value}))} 
+                  placeholder="e.g. https://example.com/icons/react.png"
+                  type="url"
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 px-3 py-2.5 text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition" 
                 />
+                {form.icon_url && (
+                  <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center gap-2">
+                    <img src={form.icon_url} alt="Preview" className="w-6 h-6 object-contain" onError={() => {}} />
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Preview</span>
+                  </div>
+                )}
               </div>
               {formError && (
                 <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">

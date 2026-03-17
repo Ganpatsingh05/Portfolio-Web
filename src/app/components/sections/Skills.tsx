@@ -39,6 +39,7 @@ interface Skill {
   // Allow custom categories coming from admin (e.g., "excel")
   category: string
   icon_name?: string
+  icon_url?: string
   sort_order?: number
   is_featured?: boolean
   created_at?: string
@@ -99,6 +100,60 @@ const categoryNames = {
   custom: 'Custom'
 }
 
+const isSoftSkill = (category?: string) => (category || '').toLowerCase() === 'soft'
+
+const softSkillDescriptions: Record<string, string> = {
+  'problem solving': 'Analytical thinking',
+  'team collaboration': 'Effective teamwork',
+  communication: 'Clear & concise',
+  leadership: 'Guiding teams',
+  adaptability: 'Quick learner',
+  'time management': 'Meeting deadlines',
+  'critical thinking': 'Logical reasoning',
+  creativity: 'Innovative solutions'
+}
+
+const fallbackSoftIcons = [FaLightbulb, FaUsers, FaComments, FaStar, FaCogs, FaClock, FaBrain, FaRocket]
+
+const softSkillColorSets = [
+  {
+    icon: 'text-rose-500',
+    percent: 'text-rose-600 dark:text-rose-400',
+    hoverBorder: 'hover:border-rose-400 dark:hover:border-rose-600',
+    bar: 'from-rose-500 to-pink-500'
+  },
+  {
+    icon: 'text-cyan-500',
+    percent: 'text-cyan-600 dark:text-cyan-400',
+    hoverBorder: 'hover:border-cyan-400 dark:hover:border-cyan-600',
+    bar: 'from-cyan-500 to-blue-500'
+  },
+  {
+    icon: 'text-emerald-500',
+    percent: 'text-emerald-600 dark:text-emerald-400',
+    hoverBorder: 'hover:border-emerald-400 dark:hover:border-emerald-600',
+    bar: 'from-emerald-500 to-green-500'
+  },
+  {
+    icon: 'text-violet-500',
+    percent: 'text-violet-600 dark:text-violet-400',
+    hoverBorder: 'hover:border-violet-400 dark:hover:border-violet-600',
+    bar: 'from-violet-500 to-purple-500'
+  },
+  {
+    icon: 'text-amber-500',
+    percent: 'text-amber-600 dark:text-amber-400',
+    hoverBorder: 'hover:border-amber-400 dark:hover:border-amber-600',
+    bar: 'from-amber-500 to-orange-500'
+  },
+  {
+    icon: 'text-fuchsia-500',
+    percent: 'text-fuchsia-600 dark:text-fuchsia-400',
+    hoverBorder: 'hover:border-fuchsia-400 dark:hover:border-fuchsia-600',
+    bar: 'from-fuchsia-500 to-rose-500'
+  }
+]
+
 // Normalize a category string to a known key for colors/icons
 const normalizeCategoryKey = (cat?: string) => {
   const key = (cat || '').toLowerCase()
@@ -127,7 +182,7 @@ export default function Skills() {
   const { data: rawSkills = [], isLoading } = useSkills()
   
   // Sort skills by category, level, name (memoized to avoid re-sorting on every render)
-  const skills = useMemo(() => rawSkills.slice().sort((a: Skill, b: Skill) => {
+  const sortedSkills = useMemo(() => rawSkills.slice().sort((a: Skill, b: Skill) => {
     const ca = (a.category || '').toLowerCase()
     const cb = (b.category || '').toLowerCase()
     if (ca < cb) return -1
@@ -135,28 +190,55 @@ export default function Skills() {
     if (a.level !== b.level) return b.level - a.level
     return (a.name || '').localeCompare(b.name || '')
   }), [rawSkills])
+
+  const technicalSkills = useMemo(() => sortedSkills.filter((s: Skill) => !isSoftSkill(s.category)), [sortedSkills])
+  const adminSoftSkills = useMemo(() => sortedSkills.filter((s: Skill) => isSoftSkill(s.category)), [sortedSkills])
+
+  const softSkillsForDisplay = useMemo(() => {
+    if (adminSoftSkills.length > 0) {
+      return adminSoftSkills.map((skill) => ({
+        id: skill.id || skill.name,
+        name: skill.name,
+        level: skill.level,
+        desc: softSkillDescriptions[(skill.name || '').toLowerCase()] || 'Professional competency',
+        icon_name: skill.icon_name,
+        icon_url: skill.icon_url
+      }))
+    }
+
+    return [
+      { id: 'soft-1', name: 'Problem Solving', level: 94, desc: 'Analytical thinking' },
+      { id: 'soft-2', name: 'Team Collaboration', level: 92, desc: 'Effective teamwork' },
+      { id: 'soft-3', name: 'Communication', level: 90, desc: 'Clear & concise' },
+      { id: 'soft-4', name: 'Leadership', level: 88, desc: 'Guiding teams' },
+      { id: 'soft-5', name: 'Adaptability', level: 93, desc: 'Quick learner' },
+      { id: 'soft-6', name: 'Time Management', level: 89, desc: 'Meeting deadlines' },
+      { id: 'soft-7', name: 'Critical Thinking', level: 91, desc: 'Logical reasoning' },
+      { id: 'soft-8', name: 'Creativity', level: 90, desc: 'Innovative solutions' }
+    ]
+  }, [adminSoftSkills])
   
   const categories = useMemo(() => {
     const knownOrder = ['frontend', 'backend', 'languages', 'database', 'tools', 'ai-ml', 'other', 'custom']
-    const uniqueCats = Array.from(new Set(skills.map((s: Skill) => s.category).filter(Boolean)))
+    const uniqueCats = Array.from(new Set(technicalSkills.map((s: Skill) => s.category).filter(Boolean)))
     const ordered = knownOrder.filter(c => uniqueCats.includes(c))
     const extra = uniqueCats.filter(c => !knownOrder.includes(c))
     return ['all', ...ordered, ...extra]
-  }, [skills])
+  }, [technicalSkills])
   
   const filteredSkills = useMemo(() => activeCategory === 'all' 
-    ? skills 
-    : skills.filter((skill: Skill) => skill.category === activeCategory),
-    [activeCategory, skills])
+    ? technicalSkills 
+    : technicalSkills.filter((skill: Skill) => skill.category === activeCategory),
+    [activeCategory, technicalSkills])
 
   const skillsStats = useMemo(() => ({
-    total: skills.length,
-    frontend: skills.filter((s: Skill) => s.category === 'frontend').length,
-    backend: skills.filter((s: Skill) => s.category === 'backend').length,
-    tools: skills.filter((s: Skill) => s.category === 'tools').length,
-    'ai-ml': skills.filter((s: Skill) => s.category === 'ai-ml').length,
-    avgLevel: skills.length > 0 ? Math.round(skills.reduce((sum: number, skill: Skill) => sum + skill.level, 0) / skills.length) : 0
-  }), [skills])
+    total: technicalSkills.length,
+    frontend: technicalSkills.filter((s: Skill) => s.category === 'frontend').length,
+    backend: technicalSkills.filter((s: Skill) => s.category === 'backend').length,
+    tools: technicalSkills.filter((s: Skill) => s.category === 'tools').length,
+    'ai-ml': technicalSkills.filter((s: Skill) => s.category === 'ai-ml').length,
+    avgLevel: technicalSkills.length > 0 ? Math.round(technicalSkills.reduce((sum: number, skill: Skill) => sum + skill.level, 0) / technicalSkills.length) : 0
+  }), [technicalSkills])
 
   if (isLoading) {
     return (
@@ -200,7 +282,7 @@ export default function Skills() {
             Skills & Expertise
           </h2>
           <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto px-4">
-            Technical skills I've mastered through continuous learning and real-world application.
+            Technical and soft skills I've sharpened through continuous learning and real-world application.
           </p>
         </motion.div>
 
@@ -272,8 +354,14 @@ export default function Skills() {
             >
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="text-xl sm:text-2xl">
-                    {skill.icon_name && iconMap[skill.icon_name] || <FaCode className="text-gray-600" />}
+                  <div className="text-xl sm:text-2xl w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
+                    {skill.icon_url ? (
+                      <img src={skill.icon_url} alt={skill.name} className="w-full h-full object-contain" />
+                    ) : skill.icon_name && iconMap[skill.icon_name] ? (
+                      iconMap[skill.icon_name]
+                    ) : (
+                      <FaCode className="text-gray-600" />
+                    )}
                   </div>
                   <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                     {skill.name}
@@ -324,33 +412,46 @@ export default function Skills() {
           </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[
-              { name: 'Problem Solving', icon: <FaLightbulb />, desc: 'Analytical thinking' },
-              { name: 'Team Collaboration', icon: <FaUsers />, desc: 'Effective teamwork' },
-              { name: 'Communication', icon: <FaComments />, desc: 'Clear & concise' },
-              { name: 'Leadership', icon: <FaStar />, desc: 'Guiding teams' },
-              { name: 'Adaptability', icon: <FaCogs />, desc: 'Quick learner' },
-              { name: 'Time Management', icon: <FaClock />, desc: 'Meeting deadlines' },
-              { name: 'Critical Thinking', icon: <FaBrain />, desc: 'Logical reasoning' },
-              { name: 'Creativity', icon: <FaRocket />, desc: 'Innovative solutions' },
-            ].map((skill, index) => (
+            {softSkillsForDisplay.map((skill, index) => {
+              const FallbackIcon = fallbackSoftIcons[index % fallbackSoftIcons.length]
+              const softColor = softSkillColorSets[index % softSkillColorSets.length]
+
+              return (
               <motion.div
-                key={skill.name}
+                key={skill.id}
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: Math.min(index * 0.06, 0.4) }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-xl shadow-md border border-orange-200 dark:border-gray-700 group hover:border-orange-400 dark:hover:border-orange-600 transition-colors"
+                className={`bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-xl shadow-md border border-orange-200 dark:border-gray-700 group transition-colors ${softColor.hoverBorder}`}
               >
-                <div className="text-2xl sm:text-3xl text-orange-500 mb-2 sm:mb-3 group-hover:text-orange-600 transition-colors">
-                  {skill.icon}
+                <div className={`text-2xl sm:text-3xl mb-2 sm:mb-3 ${softColor.icon}`}>
+                  {skill.icon_url ? (
+                    <img src={skill.icon_url} alt={skill.name} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
+                  ) : skill.icon_name && iconMap[skill.icon_name] ? (
+                    iconMap[skill.icon_name]
+                  ) : (
+                    <FallbackIcon />
+                  )}
                 </div>
-                <h4 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
-                  {skill.name}
-                </h4>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <h4 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                    {skill.name}
+                  </h4>
+                  <span className={`text-xs font-semibold ${softColor.percent}`}>{skill.level}%</span>
+                </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{skill.desc}</p>
+                <div className="mt-3 h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${skill.level}%` }}
+                    transition={{ duration: 0.7, delay: Math.min(index * 0.05, 0.25), ease: [0.22, 1, 0.36, 1] }}
+                    viewport={{ once: true }}
+                    className={`h-full bg-gradient-to-r ${softColor.bar} rounded-full`}
+                  />
+                </div>
               </motion.div>
-            ))}
+            )})}
           </div>
         </motion.div>
       </div>
