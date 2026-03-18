@@ -71,7 +71,7 @@ export default function Projects() {
         <div className="absolute bottom-20 right-10 w-48 sm:w-96 h-48 sm:h-96 bg-amber-300 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 overflow-visible">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -105,7 +105,7 @@ export default function Projects() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           viewport={{ once: true }}
-          className="flex gap-2 sm:gap-4 mb-10 sm:mb-12 lg:mb-16 overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center scrollbar-hide"
+          className="flex gap-2 sm:gap-4 mb-10 sm:mb-12 lg:mb-16 overflow-x-auto pb-3 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center scrollbar-hide"
         >
           {categories.map((category) => (
             <motion.button

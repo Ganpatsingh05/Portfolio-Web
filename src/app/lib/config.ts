@@ -40,6 +40,7 @@ export const config = {
     hero: 300, // 5 minutes
     projects: 300,
     skills: 300,
+    softSkills: 300,
     experiences: 300,
     personalInfo: 600, // 10 minutes
   },
@@ -52,6 +53,7 @@ export const apiEndpoints = {
   hero: `${config.api.baseUrl}/api/hero`,
   projects: `${config.api.baseUrl}/api/projects`,
   skills: `${config.api.baseUrl}/api/skills`,
+  softSkills: `${config.api.baseUrl}/api/soft-skills`,
   experiences: `${config.api.baseUrl}/api/experiences`,
   certificates: `${config.api.baseUrl}/api/certificates`,
   personalInfo: `${config.api.baseUrl}/api/personal-info`,

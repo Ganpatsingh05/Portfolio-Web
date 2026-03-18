@@ -82,7 +82,7 @@ export const downloadResume = async () => {
 export const openProjectDemo = (demoUrl: string) => {
   const safeDemoUrl = normalizeExternalUrl(demoUrl)
   if (!safeDemoUrl) {
-    toast.info('Demo Coming Soon', 'This project is still in development.')
+    toast.info('Demo', 'Will be available soon')
     return
   }
   window.open(safeDemoUrl, '_blank', 'noopener,noreferrer')
@@ -91,7 +91,7 @@ export const openProjectDemo = (demoUrl: string) => {
 export const openProjectCode = (githubUrl: string) => {
   const safeGithubUrl = normalizeExternalUrl(githubUrl)
   if (!safeGithubUrl) {
-    toast.info('Source Code Coming Soon', 'Source code will be available soon!')
+    toast.info('Source Code', 'Will be available soon')
     return
   }
   window.open(safeGithubUrl, '_blank', 'noopener,noreferrer')

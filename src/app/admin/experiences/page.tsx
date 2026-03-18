@@ -5,7 +5,7 @@ import { adminApi, ensureAuthedClient } from '@/app/lib/admin/api';
 import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmModal';
 
-interface Experience { id: string; title: string; company: string; period: string; type: 'experience' | 'education'; description?: string | string[]; start_date?: string; end_date?: string; created_at: string; }
+interface Experience { id: string; title: string; company: string; period: string; type: 'experience' | 'education'; description?: string | string[]; start_date?: string; end_date?: string; grades?: string; created_at: string; }
 
 export default function ExperiencesPage() {
   const router = useRouter();
@@ -14,7 +14,7 @@ export default function ExperiencesPage() {
   const [items, setItems] = useState<Experience[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Experience | null>(null);
-  const [form, setForm] = useState({ title: '', company: '', period: '', type: 'experience', description: '', start_date: '', end_date: '' });
+  const [form, setForm] = useState({ title: '', company: '', period: '', type: 'experience', description: '', start_date: '', end_date: '', grades: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,8 +23,8 @@ export default function ExperiencesPage() {
   const load = async () => { try { setItems(await adminApi.experiences.list()); } catch(e:any){ if(e.status===401){router.replace('/admin/login');return;} setError(e.message);} finally{ setLoading(false);} };
   useEffect(()=>{ if(!ensureAuthedClient()){ router.replace('/admin/login'); return;} load(); },[router]);
 
-  const startAdd = () => { setEditing(null); setForm({ title:'', company:'', period:'', type:'experience', description:'', start_date:'', end_date:'' }); setShowForm(true); };
-  const startEdit = (x: Experience) => { setEditing(x); setForm({ title:x.title, company:x.company, period:x.period, type:x.type, description: Array.isArray(x.description) ? x.description.join('\n') : (x.description||''), start_date: x.start_date || '', end_date: x.end_date || '' }); setShowForm(true); };
+  const startAdd = () => { setEditing(null); setForm({ title:'', company:'', period:'', type:'experience', description:'', start_date:'', end_date:'', grades:'' }); setShowForm(true); };
+  const startEdit = (x: Experience) => { setEditing(x); setForm({ title:x.title, company:x.company, period:x.period, type:x.type, description: Array.isArray(x.description) ? x.description.join('\n') : (x.description||''), start_date: x.start_date || '', end_date: x.end_date || '', grades: x.grades || '' }); setShowForm(true); };
 
   const save = async () => {
     const payload = { ...form, description: form.description.split('\n').map(l=>l.trim()).filter(Boolean), start_date: form.start_date || null, end_date: form.end_date || null };
@@ -218,6 +218,9 @@ export default function ExperiencesPage() {
                       <h4 className="font-medium text-gray-900 dark:text-white">{e.title}</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">{e.company}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{e.period}</p>
+                      {e.grades && (
+                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">📊 {e.grades}</p>
+                      )}
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
                       <button 
@@ -369,6 +372,17 @@ export default function ExperiencesPage() {
                   </button>
                 </div>
               </div>
+              {form.type === 'education' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Grades <span className="text-gray-400 font-normal">(e.g., GPA: 3.8/4.0 or CGPA: 8.5/10)</span></label>
+                <input
+                  value={form.grades}
+                  onChange={e => setForm(f => ({...f, grades: e.target.value}))}
+                  placeholder="e.g., GPA: 3.8/4.0"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 px-3 py-2.5 text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition"
+                />
+              </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Description <span className="text-gray-400 font-normal">(one bullet point per line)</span>

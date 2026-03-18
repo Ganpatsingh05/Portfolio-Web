@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
-import { FaRocket, FaCode, FaStar, FaBriefcase, FaGraduationCap } from 'react-icons/fa'
+import { FaRocket, FaCode, FaStar, FaBriefcase, FaGraduationCap, FaBook } from 'react-icons/fa'
 import { useExperiences } from '@/lib/hooks'
 
 // Dynamic import for Lottie animation
@@ -15,6 +15,7 @@ interface ExperienceItem {
   period: string
   description?: string | string[]
   type: 'experience' | 'education'
+  grades?: string
   skills?: string[]
   location?: string
   company_url?: string
@@ -60,7 +61,7 @@ export default function Experience() {
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 1.0 }}
             viewport={{ once: true }}
             className="text-center lg:text-left"
           >
@@ -110,7 +111,7 @@ export default function Experience() {
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 1.0, delay: 0.2 }}
             viewport={{ once: true }}
             className="flex justify-center lg:justify-end"
           >
@@ -152,21 +153,21 @@ export default function Experience() {
               key={index}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: Math.min(index * 0.1, 0.4) }}
+              transition={{ duration: 1.0, delay: Math.min(index * 0.1, 0.4) }}
               viewport={{ once: true }}
               className={`relative mb-16 ${
                 index % 2 === 0 ? 'md:text-right md:pr-8' : 'md:text-left md:pl-8'
               }`}
             >
               {/* Timeline Dot with Icon */}
-              <motion.div 
+              <motion.div
                 className={`absolute top-6 ${
-                  index % 2 === 0 
-                    ? 'left-0 md:left-auto md:right-0 md:transform md:translate-x-1/2' 
+                  index % 2 === 0
+                    ? 'left-0 md:left-auto md:right-0 md:transform md:translate-x-1/2'
                     : 'left-0 md:left-0 md:transform md:-translate-x-1/2'
                 } flex items-center justify-center`}
                 whileHover={{ scale: 1.2 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.6 }}
               >
                 <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full shadow-lg border-4 border-orange-400 dark:border-orange-500 flex items-center justify-center">
                   {item.type === 'experience' ? (
@@ -177,7 +178,7 @@ export default function Experience() {
                 </div>
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 className={`ml-16 md:ml-0 ${
                   index % 2 === 0 ? 'md:mr-16' : 'md:ml-16'
                 }`}
@@ -185,10 +186,10 @@ export default function Experience() {
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 border border-orange-100 dark:border-orange-800/30">
                   {/* Header */}
                   <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <motion.span 
+                    <motion.span
                       className={`text-xs px-3 py-1 rounded-full font-medium ${
-                        item.type === 'experience' 
-                          ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200' 
+                        item.type === 'experience'
+                          ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200'
                           : 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200'
                       }`}
                       whileHover={{ scale: 1.1 }}
@@ -197,19 +198,45 @@ export default function Experience() {
                     </motion.span>
                     <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">{item.period}</span>
                   </div>
-                  
+
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{item.title}</h3>
-                  <p className="text-orange-600 dark:text-orange-400 font-semibold mb-4 text-lg">{item.company}</p>
-                  
+
+                  {/* Company and Grades Row */}
+                  <div className="flex items-center justify-between mb-4">
+                    {index % 2 === 0 ? (
+                      <>
+                        {item.type === 'education' && item.grades && (
+                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-sm font-medium border border-green-200 dark:border-green-800">
+                            <FaBook className="w-4 h-4" />
+                            <span>Grades:</span>
+                            <span>{item.grades}</span>
+                          </div>
+                        )}
+                        <p className="text-orange-600 dark:text-orange-400 font-semibold text-lg">{item.company}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-orange-600 dark:text-orange-400 font-semibold text-lg">{item.company}</p>
+                        {item.type === 'education' && item.grades && (
+                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-sm font-medium border border-green-200 dark:border-green-800">
+                            <FaBook className="w-4 h-4" />
+                            <span>Grades:</span>
+                            <span>{item.grades}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
                   {/* Description */}
                   <ul className="space-y-3 mb-4">
                     {(Array.isArray(item.description) ? item.description : item.description ? [item.description] : []).map((desc, descIndex) => (
-                      <motion.li 
-                        key={descIndex} 
+                      <motion.li
+                        key={descIndex}
                         className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed flex items-start gap-2"
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5, delay: descIndex * 0.1 }}
+                        transition={{ duration: 1.0, delay: descIndex * 0.1 }}
                         viewport={{ once: true }}
                       >
                         <span className="text-orange-500 mt-1 text-xs">▶</span>
@@ -227,7 +254,7 @@ export default function Experience() {
                             key={skill}
                             initial={{ opacity: 0, scale: 0.8 }}
                             whileInView={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.3, delay: skillIndex * 0.1 }}
+                            transition={{ duration: 0.6, delay: skillIndex * 0.1 }}
                             viewport={{ once: true }}
                             whileHover={{ scale: 1.1, y: -2 }}
                             className="px-3 py-1 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full text-xs font-medium border border-orange-200 dark:border-orange-700"

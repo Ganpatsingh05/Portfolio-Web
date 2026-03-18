@@ -177,16 +177,32 @@ export const adminApi = {
   // Skills
   skills: {
     list: () => request<any[]>(`/api/admin/skills`),
-    create: (data: any) => request(`/api/admin/skills`, { 
-      method: 'POST', 
-      body: JSON.stringify(data) 
+    create: (data: any) => request(`/api/admin/skills`, {
+      method: 'POST',
+      body: JSON.stringify(data)
     }),
-    update: (id: string, data: any) => request(`/api/admin/skills/${id}`, { 
-      method: 'PUT', 
-      body: JSON.stringify(data) 
+    update: (id: string, data: any) => request(`/api/admin/skills/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
     }),
-    delete: (id: string) => request(`/api/admin/skills/${id}`, { 
-      method: 'DELETE' 
+    delete: (id: string) => request(`/api/admin/skills/${id}`, {
+      method: 'DELETE'
+    })
+  },
+
+  // Soft Skills
+  softSkills: {
+    list: () => request<any[]>(`/api/admin/soft-skills`),
+    create: (data: any) => request(`/api/admin/soft-skills`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+    update: (id: string, data: any) => request(`/api/admin/soft-skills/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }),
+    delete: (id: string) => request(`/api/admin/soft-skills/${id}`, {
+      method: 'DELETE'
     })
   },
 

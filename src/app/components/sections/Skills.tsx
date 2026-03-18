@@ -30,7 +30,7 @@ import {
   SiTensorflow,
   SiJavascript
 } from 'react-icons/si'
-import { useSkills } from '@/lib/hooks'
+import { useSkills, useSoftSkills } from '@/lib/hooks'
 
 interface Skill {
   id?: string
@@ -99,8 +99,6 @@ const categoryNames = {
   other: 'Other',
   custom: 'Custom'
 }
-
-const isSoftSkill = (category?: string) => (category || '').toLowerCase() === 'soft'
 
 const softSkillDescriptions: Record<string, string> = {
   'problem solving': 'Analytical thinking',
@@ -179,7 +177,10 @@ const getCategoryLabel = (cat?: string) => {
 
 export default function Skills() {
   const [activeCategory, setActiveCategory] = useState<string>('all')
-  const { data: rawSkills = [], isLoading } = useSkills()
+  const { data: rawSkills = [], isLoading: skillsLoading } = useSkills()
+  const { data: rawSoftSkills = [], isLoading: softSkillsLoading } = useSoftSkills()
+
+  const isLoading = skillsLoading || softSkillsLoading
   
   // Sort skills by category, level, name (memoized to avoid re-sorting on every render)
   const sortedSkills = useMemo(() => rawSkills.slice().sort((a: Skill, b: Skill) => {
@@ -191,31 +192,19 @@ export default function Skills() {
     return (a.name || '').localeCompare(b.name || '')
   }), [rawSkills])
 
-  const technicalSkills = useMemo(() => sortedSkills.filter((s: Skill) => !isSoftSkill(s.category)), [sortedSkills])
-  const adminSoftSkills = useMemo(() => sortedSkills.filter((s: Skill) => isSoftSkill(s.category)), [sortedSkills])
+  const technicalSkills = useMemo(() => sortedSkills, [sortedSkills])
 
   const softSkillsForDisplay = useMemo(() => {
-    if (adminSoftSkills.length > 0) {
-      return adminSoftSkills.map((skill) => ({
+    return rawSoftSkills
+      .filter((skill: any) => skill.is_visible !== false)
+      .map((skill: any) => ({
         id: skill.id || skill.name,
         name: skill.name,
         level: skill.level,
         desc: softSkillDescriptions[(skill.name || '').toLowerCase()] || 'Professional competency',
         icon_name: skill.icon_name
       }))
-    }
-
-    return [
-      { id: 'soft-1', name: 'Problem Solving', level: 94, desc: 'Analytical thinking', icon_name: undefined },
-      { id: 'soft-2', name: 'Team Collaboration', level: 92, desc: 'Effective teamwork', icon_name: undefined },
-      { id: 'soft-3', name: 'Communication', level: 90, desc: 'Clear & concise', icon_name: undefined },
-      { id: 'soft-4', name: 'Leadership', level: 88, desc: 'Guiding teams', icon_name: undefined },
-      { id: 'soft-5', name: 'Adaptability', level: 93, desc: 'Quick learner', icon_name: undefined },
-      { id: 'soft-6', name: 'Time Management', level: 89, desc: 'Meeting deadlines', icon_name: undefined },
-      { id: 'soft-7', name: 'Critical Thinking', level: 91, desc: 'Logical reasoning', icon_name: undefined },
-      { id: 'soft-8', name: 'Creativity', level: 90, desc: 'Innovative solutions', icon_name: undefined }
-    ]
-  }, [adminSoftSkills])
+  }, [rawSoftSkills])
   
   const categories = useMemo(() => {
     const knownOrder = ['frontend', 'backend', 'languages', 'database', 'tools', 'ai-ml', 'other', 'custom']

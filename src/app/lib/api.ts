@@ -192,6 +192,19 @@ export const api = {
     }>>(apiEndpoints.skills);
   },
 
+  // Soft Skills
+  async getSoftSkills() {
+    return fetchApi<Array<{
+      id: string;
+      name: string;
+      level: number;
+      icon_url?: string;
+      sort_order?: number;
+      created_at?: string;
+      updated_at?: string;
+    }>>(apiEndpoints.softSkills);
+  },
+
   // Experiences
   async getExperiences() {
     return fetchApi<Array<{

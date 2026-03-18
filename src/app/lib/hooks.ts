@@ -6,6 +6,7 @@ export const queryKeys = {
   hero: ['hero'] as const,
   projects: ['projects'] as const,
   skills: ['skills'] as const,
+  softSkills: ['softSkills'] as const,
   experiences: ['experiences'] as const,
   certificates: ['certificates'] as const,
   personalInfo: ['personalInfo'] as const,
@@ -51,6 +52,21 @@ export function useSkills() {
         return data.length > 0 ? data : fallbackData.skills
       } catch {
         return fallbackData.skills
+      }
+    },
+  })
+}
+
+// Hook: Fetch soft skills
+export function useSoftSkills() {
+  return useQuery({
+    queryKey: queryKeys.softSkills,
+    queryFn: async () => {
+      try {
+        const data = await api.getSoftSkills()
+        return data.length > 0 ? data : []
+      } catch {
+        return []
       }
     },
   })
