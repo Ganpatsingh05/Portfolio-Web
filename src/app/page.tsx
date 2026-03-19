@@ -47,6 +47,7 @@ const normalizeVisibleSections = (value: unknown): string[] => {
 export default function Home() {
   const { applyThemeFromSettings } = useTheme()
   const { setIsLoading, setLoadingProgress } = useGlobalLoading()
+  const LOADER_DURATION_MS = 3000
   const [settings, setSettings] = useState<SiteSettings>({
     maintenance_mode: false,
     maintenance_message: 'Site is under maintenance. Please check back soon.',
@@ -62,23 +63,26 @@ export default function Home() {
   })
 
   useEffect(() => {
-    let showLoaderTimer: ReturnType<typeof setTimeout> | null = null
-    let done = false
+    let cancelled = false
+
+    // Show loader immediately and keep it visible for exactly 3 seconds.
+    setIsLoading(true)
+    setLoadingProgress(15)
+
+    const hideLoaderTimer = setTimeout(() => {
+      if (cancelled) return
+      setLoadingProgress(100)
+      setIsLoading(false)
+    }, LOADER_DURATION_MS)
 
     const initializeApp = async () => {
-      // Only show the loader if data takes longer than 1s to arrive
-      showLoaderTimer = setTimeout(() => {
-        if (!done) {
-          setIsLoading(true)
-          setLoadingProgress(15)
-        }
-      }, 1000)
-
       try {
         const [data, _hero] = await Promise.all([
-          api.getSettings().then(d => { if (!done) setLoadingProgress(50); return d }),
-          api.getHero().then(h => { if (!done) setLoadingProgress(75); return h }),
+          api.getSettings().then(d => { if (!cancelled) setLoadingProgress(50); return d }),
+          api.getHero().then(h => { if (!cancelled) setLoadingProgress(75); return h }),
         ])
+
+        if (cancelled) return
 
         setSettings({
           maintenance_mode: data.maintenance_mode ?? false,
@@ -100,11 +104,6 @@ export default function Home() {
         )
       } catch (error) {
         console.warn('Failed to fetch initial data, using defaults:', error)
-      } finally {
-        done = true
-        if (showLoaderTimer) clearTimeout(showLoaderTimer)
-        setLoadingProgress(100)
-        setIsLoading(false)
       }
     }
 
@@ -120,7 +119,13 @@ export default function Home() {
         api.trackEvent('page_view', { path: window.location.pathname })
       }, 100)
     }
-  }, [applyThemeFromSettings, setIsLoading, setLoadingProgress])
+
+    return () => {
+      cancelled = true
+      clearTimeout(hideLoaderTimer)
+      setIsLoading(false)
+    }
+  }, [LOADER_DURATION_MS, applyThemeFromSettings, setIsLoading, setLoadingProgress])
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-900 overflow-x-hidden">
