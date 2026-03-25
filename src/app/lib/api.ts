@@ -274,7 +274,7 @@ export const api = {
     return fetchApi<{ message: string; id: string; email_sent?: boolean }>(apiEndpoints.contact, {
       method: 'POST',
       body: JSON.stringify(data),
-    });
+    }, 4); // More retries for contact form (default is 3)
   },
 
   // Analytics

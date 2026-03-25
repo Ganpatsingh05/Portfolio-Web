@@ -18,7 +18,7 @@ export const config = {
   api: {
     baseUrl: envVars.BACKEND_API_URL,
     fallbackBaseUrl: envVars.FALLBACK_API_URL,
-    timeout: 45000, // 45 seconds - increased for better cold start handling
+    timeout: 60000, // 60 seconds - handles Render free tier cold starts (30-50s)
   },
 
   // Environment
